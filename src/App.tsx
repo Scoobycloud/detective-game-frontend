@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { io, Socket } from 'socket.io-client';
+import io from 'socket.io-client';
 import './App.css';
 
 // Real-time Detective Game Interface with Socket.IO
@@ -18,7 +18,7 @@ function App() {
   const [pendingCorrelationId, setPendingCorrelationId] = useState('');
   const [answerText, setAnswerText] = useState('');
 
-  const socketRef = useRef<Socket | null>(null);
+  const socketRef = useRef<any | null>(null);
 
   const characters = [
     'Mrs. Bellamy',
@@ -59,19 +59,19 @@ function App() {
         addMessage('❌ Disconnected from game server');
       });
 
-      socket.on('system', ({ msg }) => {
+      socket.on('system', ({ msg }: { msg: string }) => {
         // Filter out system messages that would give away the murderer
         if (!msg.includes('Human now controls:') && !msg.includes('joined')) {
           addMessage(`[system] ${msg}`);
         }
       });
 
-      socket.on('answer', ({ character, answer }) => {
+      socket.on('answer', ({ character, answer }: { character: string; answer: string }) => {
         addMessage(`💬 ${character}: ${answer}`);
       });
 
       // Backend sends 'question_for_murderer' when detective asks human-controlled character
-      socket.on('question_for_murderer', ({ correlation_id, character, question }) => {
+      socket.on('question_for_murderer', ({ correlation_id, character, question }: { correlation_id: string; character: string; question: string }) => {
         if (role === 'murderer' && character === controlledCharacter) {
           addMessage(`❓ Detective asks ${character}: "${question}"`);
           setPendingQuestion(question);
@@ -79,7 +79,7 @@ function App() {
         }
       });
 
-      socket.on('error', ({ msg }) => {
+      socket.on('error', ({ msg }: { msg: string }) => {
         addMessage(`❌ Error: ${msg}`);
       });
 
