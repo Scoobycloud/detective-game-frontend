@@ -95,7 +95,7 @@ function App() {
         socketRef.current = null;
       }
     };
-  }, [role, controlledCharacter]);
+  }, [role, controlledCharacter, API_URL]);
 
   const addMessage = (msg: string) => {
     const timestamp = new Date().toLocaleTimeString();
