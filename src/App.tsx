@@ -1,19 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { io, Socket } from 'socket.io-client';
 import './App.css';
 
-// Simple Detective Game Interface
+// Real-time Detective Game Interface with Socket.IO
 function App() {
   const [role, setRole] = useState<'detective' | 'murderer' | null>(null);
   const [gameState, setGameState] = useState<'lobby' | 'playing'>('lobby');
   const [messages, setMessages] = useState<string[]>([]);
   const [question, setQuestion] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState('');
+  const [connected, setConnected] = useState(false);
   
   // Murderer-specific states
   const [controlledCharacter, setControlledCharacter] = useState('');
   const [characterLocked, setCharacterLocked] = useState(false);
   const [pendingQuestion, setPendingQuestion] = useState('');
+  const [pendingQuestionId, setPendingQuestionId] = useState('');
   const [answerText, setAnswerText] = useState('');
+
+  const socketRef = useRef<Socket | null>(null);
 
   const characters = [
     'Mrs. Bellamy',
@@ -25,12 +30,74 @@ function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    addMessage('�� Welcome to Detective Game Online!');
+    addMessage('🎮 Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
   }, []);
 
+  useEffect(() => {
+    // Initialize Socket.IO connection
+    if (role && !socketRef.current) {
+      addMessage('🔗 Connecting to game server...');
+      
+      socketRef.current = io(API_URL, {
+        transports: ['websocket']
+      });
+
+      const socket = socketRef.current;
+
+      socket.on('connect', () => {
+        setConnected(true);
+        addMessage('✅ Connected to game server!');
+        
+        // Join as the selected role
+        socket.emit('join_role', { role });
+        addMessage(`🎭 Joined as ${role}`);
+      });
+
+      socket.on('disconnect', () => {
+        setConnected(false);
+        addMessage('❌ Disconnected from game server');
+      });
+
+      socket.on('system', ({ msg }) => {
+        // Filter out system messages that would give away the murderer
+        if (!msg.includes('Human now controls:') && !msg.includes('joined')) {
+          addMessage(`[system] ${msg}`);
+        }
+      });
+
+      socket.on('answer', ({ character, answer }) => {
+        addMessage(`💬 ${character}: ${answer}`);
+      });
+
+      socket.on('question_for_human', ({ character, question, questionId }) => {
+        if (role === 'murderer' && character === controlledCharacter) {
+          addMessage(`❓ Detective asks ${character}: "${question}"`);
+          setPendingQuestion(question);
+          setPendingQuestionId(questionId);
+        }
+      });
+
+      socket.on('error', ({ msg }) => {
+        addMessage(`❌ Error: ${msg}`);
+      });
+
+      // Cleanup on unmount
+      return () => {
+        socket.disconnect();
+      };
+    }
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+    };
+  }, [role, controlledCharacter]);
+
   const addMessage = (msg: string) => {
-    setMessages(prev => [...prev, msg]);
+    setMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
   };
 
   const joinAsDetective = () => {
@@ -46,42 +113,47 @@ function App() {
   };
 
   const lockCharacter = () => {
-    if (!controlledCharacter) return;
+    if (!controlledCharacter || !socketRef.current) return;
     
     setCharacterLocked(true);
     addMessage(`🔒 You are now controlling ${controlledCharacter} for the rest of the game.`);
+    
+    // Tell the server which character is now human-controlled
+    socketRef.current.emit('set_human_character', { character: controlledCharacter });
     addMessage('🎭 When the detective asks this character questions, you will respond.');
   };
 
-  const askQuestion = async () => {
-    if (!question.trim() || !selectedCharacter) return;
+  const askQuestion = () => {
+    if (!question.trim() || !selectedCharacter || !socketRef.current) return;
 
-    const questionText = `🕵️ You: ${question}`;
+    const questionText = `🕵️ You asked ${selectedCharacter}: ${question}`;
     addMessage(questionText);
-    const currentQuestion = question;
+    
+    // Send question via Socket.IO
+    socketRef.current.emit('ask', {
+      character: selectedCharacter,
+      question: question
+    });
+    
     setQuestion('');
+  };
 
-    try {
-      const response = await fetch(`${API_URL}/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          character: selectedCharacter,
-          question: currentQuestion
-        })
-      });
+  const sendAnswer = () => {
+    if (!answerText.trim() || !pendingQuestionId || !socketRef.current) return;
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+    // Send human response via Socket.IO
+    socketRef.current.emit('human_response', {
+      questionId: pendingQuestionId,
+      character: controlledCharacter,
+      answer: answerText
+    });
 
-      const data = await response.json();
-      addMessage(`💬 ${selectedCharacter}: ${data.answer}`);
-    } catch (error) {
-      console.error('Backend connection error:', error);
-      addMessage('❌ Error connecting to backend. Check if server is running.');
-      addMessage(`🔗 Trying to connect to: ${API_URL}`);
-    }
+    addMessage(`💬 You (as ${controlledCharacter}): ${answerText}`);
+    
+    // Clear pending question
+    setPendingQuestion('');
+    setPendingQuestionId('');
+    setAnswerText('');
   };
 
   if (gameState === 'lobby') {
@@ -89,7 +161,7 @@ function App() {
       <div style={{minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
         <div style={{textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem'}}>
           <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#fbbf24'}}>🕵️ Detective Game</h1>
-          <p style={{marginBottom: '2rem', color: '#d1d5db'}}>Choose your role in this multiplayer mystery game</p>
+          <p style={{marginBottom: '2rem', color: '#d1d5db'}}>Real-time multiplayer mystery game</p>
           
           <div style={{marginBottom: '1rem'}}>
             <button 
@@ -127,19 +199,34 @@ function App() {
         <h1 style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#fbbf24'}}>
           🕵️ Detective Game - {role === 'detective' ? 'Detective Mode' : 'Character Controller'}
         </h1>
-        <button 
-          onClick={() => {setGameState('lobby'); setRole(null); setMessages([]); setCharacterLocked(false); setControlledCharacter('');}}
-          style={{marginTop: '0.5rem', fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer'}}
-        >
-          ← Back to Lobby
-        </button>
+        <div style={{display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem'}}>
+          <button 
+            onClick={() => {
+              setGameState('lobby'); 
+              setRole(null); 
+              setMessages([]); 
+              setCharacterLocked(false); 
+              setControlledCharacter('');
+              if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
+              }
+            }}
+            style={{fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer'}}
+          >
+            ← Back to Lobby
+          </button>
+          <div style={{fontSize: '0.875rem', color: connected ? '#10b981' : '#ef4444'}}>
+            {connected ? '🟢 Connected' : '🔴 Disconnected'}
+          </div>
+        </div>
       </div>
 
       <div style={{maxWidth: '64rem', margin: '0 auto', padding: '1rem'}}>
         {/* Game Messages */}
         <div style={{backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', height: '24rem', overflowY: 'auto', marginBottom: '1rem'}}>
           {messages.map((msg, i) => (
-            <div key={i} style={{marginBottom: '0.5rem', fontSize: '0.875rem'}}>
+            <div key={i} style={{marginBottom: '0.5rem', fontSize: '0.875rem', fontFamily: 'monospace'}}>
               {msg}
             </div>
           ))}
@@ -175,8 +262,8 @@ function App() {
               />
               <button 
                 onClick={askQuestion}
-                disabled={!question.trim() || !selectedCharacter}
-                style={{backgroundColor: !question.trim() || !selectedCharacter ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                disabled={!question.trim() || !selectedCharacter || !connected}
+                style={{backgroundColor: (!question.trim() || !selectedCharacter || !connected) ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
               >
                 Ask
               </button>
@@ -211,8 +298,8 @@ function App() {
 
                 <button 
                   onClick={lockCharacter}
-                  disabled={!controlledCharacter}
-                  style={{backgroundColor: !controlledCharacter ? '#4b5563' : '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                  disabled={!controlledCharacter || !connected}
+                  style={{backgroundColor: (!controlledCharacter || !connected) ? '#4b5563' : '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
                 >
                   🔒 Lock Character Choice
                 </button>
@@ -236,9 +323,9 @@ function App() {
                 {pendingQuestion && (
                   <div style={{marginTop: '1rem', padding: '0.75rem', backgroundColor: '#7c2d12', borderRadius: '0.25rem'}}>
                     <p style={{fontSize: '0.875rem', marginBottom: '0.5rem'}}>
-                      <strong>Question for {controlledCharacter}:</strong>
+                      <strong>❓ Question for {controlledCharacter}:</strong>
                     </p>
-                    <p style={{fontSize: '0.875rem', marginBottom: '1rem', fontStyle: 'italic'}}>
+                    <p style={{fontSize: '0.875rem', marginBottom: '1rem', fontStyle: 'italic', backgroundColor: '#451a03', padding: '0.5rem', borderRadius: '0.25rem'}}>
                       "{pendingQuestion}"
                     </p>
                     
@@ -253,13 +340,7 @@ function App() {
                     </div>
                     
                     <button 
-                      onClick={() => {
-                        if (answerText.trim()) {
-                          addMessage(`💬 ${controlledCharacter}: ${answerText}`);
-                          setPendingQuestion('');
-                          setAnswerText('');
-                        }
-                      }}
+                      onClick={sendAnswer}
                       disabled={!answerText.trim()}
                       style={{backgroundColor: !answerText.trim() ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
                     >
