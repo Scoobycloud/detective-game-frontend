@@ -8,6 +8,12 @@ function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [question, setQuestion] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState('');
+  
+  // Murderer-specific states
+  const [controlledCharacter, setControlledCharacter] = useState('');
+  const [characterLocked, setCharacterLocked] = useState(false);
+  const [pendingQuestion, setPendingQuestion] = useState('');
+  const [answerText, setAnswerText] = useState('');
 
   const characters = [
     'Mrs. Bellamy',
@@ -19,7 +25,7 @@ function App() {
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
-    addMessage('🎮 Welcome to Detective Game Online!');
+    addMessage('�� Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
   }, []);
 
@@ -36,7 +42,15 @@ function App() {
   const joinAsMurderer = () => {
     setRole('murderer');
     setGameState('playing');
-    addMessage('🎭 You are controlling a character! Answer questions to avoid suspicion.');
+    addMessage('🎭 You are controlling a character! Select which character you want to control.');
+  };
+
+  const lockCharacter = () => {
+    if (!controlledCharacter) return;
+    
+    setCharacterLocked(true);
+    addMessage(`🔒 You are now controlling ${controlledCharacter} for the rest of the game.`);
+    addMessage('🎭 When the detective asks this character questions, you will respond.');
   };
 
   const askQuestion = async () => {
@@ -114,7 +128,7 @@ function App() {
           🕵️ Detective Game - {role === 'detective' ? 'Detective Mode' : 'Character Controller'}
         </h1>
         <button 
-          onClick={() => {setGameState('lobby'); setRole(null); setMessages([]);}}
+          onClick={() => {setGameState('lobby'); setRole(null); setMessages([]); setCharacterLocked(false); setControlledCharacter('');}}
           style={{marginTop: '0.5rem', fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer'}}
         >
           ← Back to Lobby
@@ -174,19 +188,87 @@ function App() {
         {role === 'murderer' && (
           <div style={{backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem'}}>
             <h3 style={{fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem'}}>🎭 Character Control</h3>
-            <p style={{color: '#d1d5db'}}>
-              Wait for the detective to ask questions. When a question comes in, 
-              you'll be able to respond as your chosen character.
-            </p>
             
-            <div style={{marginTop: '1rem', padding: '0.75rem', backgroundColor: '#374151', borderRadius: '0.25rem'}}>
-              <p style={{fontSize: '0.875rem'}}><strong>Available Characters:</strong></p>
-              <ul style={{fontSize: '0.875rem', color: '#d1d5db', marginTop: '0.5rem'}}>
-                {characters.map(char => (
-                  <li key={char}>• {char}</li>
-                ))}
-              </ul>
-            </div>
+            {!characterLocked ? (
+              <div>
+                <p style={{color: '#d1d5db', marginBottom: '1rem'}}>
+                  Select which character you want to control. Once selected, this choice is permanent for the game.
+                </p>
+                
+                <div style={{marginBottom: '1rem'}}>
+                  <label style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem'}}>Choose Your Character:</label>
+                  <select 
+                    value={controlledCharacter}
+                    onChange={(e) => setControlledCharacter(e.target.value)}
+                    style={{width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white'}}
+                  >
+                    <option value="">Select a character...</option>
+                    {characters.map(char => (
+                      <option key={char} value={char}>{char}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <button 
+                  onClick={lockCharacter}
+                  disabled={!controlledCharacter}
+                  style={{backgroundColor: !controlledCharacter ? '#4b5563' : '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                >
+                  🔒 Lock Character Choice
+                </button>
+              </div>
+            ) : (
+              <div>
+                <div style={{marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#059669', borderRadius: '0.25rem'}}>
+                  <p style={{fontSize: '0.875rem', margin: 0}}>
+                    <strong>🔒 You are controlling: {controlledCharacter}</strong>
+                  </p>
+                  <p style={{fontSize: '0.75rem', margin: '0.25rem 0 0 0', opacity: 0.9}}>
+                    Character locked for the rest of the game
+                  </p>
+                </div>
+                
+                <p style={{color: '#d1d5db', marginBottom: '1rem'}}>
+                  Wait for the detective to ask <strong>{controlledCharacter}</strong> a question. 
+                  When they do, you'll be able to respond as this character.
+                </p>
+
+                {pendingQuestion && (
+                  <div style={{marginTop: '1rem', padding: '0.75rem', backgroundColor: '#7c2d12', borderRadius: '0.25rem'}}>
+                    <p style={{fontSize: '0.875rem', marginBottom: '0.5rem'}}>
+                      <strong>Question for {controlledCharacter}:</strong>
+                    </p>
+                    <p style={{fontSize: '0.875rem', marginBottom: '1rem', fontStyle: 'italic'}}>
+                      "{pendingQuestion}"
+                    </p>
+                    
+                    <div style={{marginBottom: '0.5rem'}}>
+                      <label style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem'}}>Your Response as {controlledCharacter}:</label>
+                      <textarea
+                        value={answerText}
+                        onChange={(e) => setAnswerText(e.target.value)}
+                        placeholder={`Answer as ${controlledCharacter}...`}
+                        style={{width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white', minHeight: '4rem', resize: 'vertical'}}
+                      />
+                    </div>
+                    
+                    <button 
+                      onClick={() => {
+                        if (answerText.trim()) {
+                          addMessage(`💬 ${controlledCharacter}: ${answerText}`);
+                          setPendingQuestion('');
+                          setAnswerText('');
+                        }
+                      }}
+                      disabled={!answerText.trim()}
+                      style={{backgroundColor: !answerText.trim() ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                    >
+                      Send Response
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
