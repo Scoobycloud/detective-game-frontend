@@ -15,7 +15,7 @@ function App() {
   const [controlledCharacter, setControlledCharacter] = useState('');
   const [characterLocked, setCharacterLocked] = useState(false);
   const [pendingQuestion, setPendingQuestion] = useState('');
-  const [pendingQuestionId, setPendingQuestionId] = useState('');
+  const [pendingCorrelationId, setPendingCorrelationId] = useState('');
   const [answerText, setAnswerText] = useState('');
 
   const socketRef = useRef<Socket | null>(null);
@@ -70,11 +70,12 @@ function App() {
         addMessage(`💬 ${character}: ${answer}`);
       });
 
-      socket.on('question_for_human', ({ character, question, questionId }) => {
+      // Backend sends 'question_for_murderer' when detective asks human-controlled character
+      socket.on('question_for_murderer', ({ correlation_id, character, question }) => {
         if (role === 'murderer' && character === controlledCharacter) {
           addMessage(`❓ Detective asks ${character}: "${question}"`);
           setPendingQuestion(question);
-          setPendingQuestionId(questionId);
+          setPendingCorrelationId(correlation_id);
         }
       });
 
@@ -97,7 +98,8 @@ function App() {
   }, [role, controlledCharacter]);
 
   const addMessage = (msg: string) => {
-    setMessages(prev => [...prev, `${new Date().toLocaleTimeString()}: ${msg}`]);
+    const timestamp = new Date().toLocaleTimeString();
+    setMessages(prev => [...prev, `${timestamp}: ${msg}`]);
   };
 
   const joinAsDetective = () => {
@@ -139,12 +141,11 @@ function App() {
   };
 
   const sendAnswer = () => {
-    if (!answerText.trim() || !pendingQuestionId || !socketRef.current) return;
+    if (!answerText.trim() || !pendingCorrelationId || !socketRef.current) return;
 
-    // Send human response via Socket.IO
-    socketRef.current.emit('human_response', {
-      questionId: pendingQuestionId,
-      character: controlledCharacter,
+    // Send murderer response via Socket.IO using backend's expected format
+    socketRef.current.emit('murderer_answer', {
+      correlation_id: pendingCorrelationId,
       answer: answerText
     });
 
@@ -152,7 +153,7 @@ function App() {
     
     // Clear pending question
     setPendingQuestion('');
-    setPendingQuestionId('');
+    setPendingCorrelationId('');
     setAnswerText('');
   };
 
@@ -207,10 +208,13 @@ function App() {
               setMessages([]); 
               setCharacterLocked(false); 
               setControlledCharacter('');
+              setPendingQuestion('');
+              setPendingCorrelationId('');
               if (socketRef.current) {
                 socketRef.current.disconnect();
                 socketRef.current = null;
               }
+              setConnected(false);
             }}
             style={{fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer'}}
           >
