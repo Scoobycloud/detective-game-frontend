@@ -73,6 +73,13 @@ function App() {
         addMessage(`💬 ${character}: ${answer}`);
       });
 
+      socket.on('character_locked', ({ character }: { character: string }) => {
+        if (role === 'murderer') {
+          setCharacterLocked(true);
+          addMessage(`🔒 Character locked: ${character}`);
+        }
+      });
+
       // Backend sends 'question_for_murderer' when detective asks human-controlled character
       socket.on('question_for_murderer', ({ correlation_id, character, question }: { correlation_id: string; character: string; question: string }) => {
         if (role === 'murderer' && character === controlledCharacter) {
@@ -162,7 +169,6 @@ function App() {
   const lockCharacter = () => {
     if (!controlledCharacter || !socketRef.current) return;
 
-    setCharacterLocked(true);
     addMessage(`🔒 You are now controlling ${controlledCharacter} for the rest of the game.`);
 
     // Tell the server which character is now human-controlled
