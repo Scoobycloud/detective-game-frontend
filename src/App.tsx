@@ -500,3 +500,5 @@ function App() {
 export default App;
 // Force deployment - Sat Aug  9 20:28:45 BST 2025
 /* Fixed Socket.IO import - Sat Aug  9 20:42:12 BST 2025 */
+
+/* ci: trigger vercel deploy */
