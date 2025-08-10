@@ -7,10 +7,12 @@ function App() {
   const [role, setRole] = useState<'detective' | 'murderer' | null>(null);
   const [gameState, setGameState] = useState<'lobby' | 'playing'>('lobby');
   const [messages, setMessages] = useState<string[]>([]);
+  const [roomCode, setRoomCode] = useState('');
+  const [myRoom, setMyRoom] = useState<string | null>(null);
   const [question, setQuestion] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState('');
   const [connected, setConnected] = useState(false);
-  
+
   // Murderer-specific states
   const [controlledCharacter, setControlledCharacter] = useState('');
   const [characterLocked, setCharacterLocked] = useState(false);
@@ -22,7 +24,7 @@ function App() {
 
   const characters = [
     'Mrs. Bellamy',
-    'Mr. Holloway', 
+    'Mr. Holloway',
     'Tommy the Janitor',
     'Dr. Adrian Blackwood'
   ];
@@ -36,9 +38,9 @@ function App() {
 
   useEffect(() => {
     // Initialize Socket.IO connection
-    if (role && !socketRef.current) {
+    if (role && myRoom && !socketRef.current) {
       addMessage('🔗 Connecting to game server...');
-      
+
       socketRef.current = io(API_URL, {
         transports: ['websocket']
       });
@@ -48,9 +50,9 @@ function App() {
       socket.on('connect', () => {
         setConnected(true);
         addMessage('✅ Connected to game server!');
-        
-        // Join as the selected role
-        socket.emit('join_role', { role });
+
+        // Join as the selected role in specified room
+        socket.emit('join_role', { role, room: myRoom });
         addMessage(`🎭 Joined as ${role}`);
       });
 
@@ -95,7 +97,7 @@ function App() {
         socketRef.current = null;
       }
     };
-  }, [role, controlledCharacter, API_URL]);
+  }, [role, controlledCharacter, API_URL, myRoom]);
 
   const addMessage = (msg: string) => {
     const timestamp = new Date().toLocaleTimeString();
@@ -103,23 +105,64 @@ function App() {
   };
 
   const joinAsDetective = () => {
+    if (!myRoom) return addMessage('❌ Enter or create a room first.');
     setRole('detective');
     setGameState('playing');
-    addMessage('🕵️ You are the Detective! Question the suspects to solve the mystery.');
+    addMessage(`🕵️ You are the Detective in room ${myRoom}!`);
   };
 
   const joinAsMurderer = () => {
+    if (!myRoom) return addMessage('❌ Enter or create a room first.');
     setRole('murderer');
     setGameState('playing');
-    addMessage('🎭 You are controlling a character! Select which character you want to control.');
+    addMessage(`🎭 You are controlling a character in room ${myRoom}!`);
+  };
+
+  const createRoom = () => {
+    if (socketRef.current) {
+      socketRef.current.emit('create_room', {});
+      socketRef.current.on('room_created', ({ room }: { room: string }) => {
+        setMyRoom(room);
+        addMessage(`🏠 Room created: ${room}`);
+      });
+    } else {
+      // Create a transient socket just to create a room, then close
+      const temp = io(API_URL, { transports: ['websocket'] });
+      temp.on('connect', () => {
+        temp.emit('create_room', {});
+      });
+      temp.on('room_created', ({ room }: { room: string }) => {
+        setMyRoom(room);
+        addMessage(`🏠 Room created: ${room}`);
+        temp.disconnect();
+      });
+      temp.on('disconnect', () => temp.close());
+    }
+  };
+
+  const quickMatch = (asRole: 'detective' | 'murderer') => {
+    const temp = io(API_URL, { transports: ['websocket'] });
+    temp.on('connect', () => {
+      temp.emit('queue_for_role', { role: asRole });
+      addMessage(`⏳ Queued for matchmaking as ${asRole}...`);
+    });
+    temp.on('matched', ({ room }: { room: string }) => {
+      setMyRoom(room);
+      setRole(asRole);
+      setGameState('playing');
+      addMessage(`✅ Matched! Room: ${room}`);
+      temp.disconnect();
+    });
+    temp.on('error', ({ msg }: { msg: string }) => addMessage(`❌ Error: ${msg}`));
+    temp.on('disconnect', () => temp.close());
   };
 
   const lockCharacter = () => {
     if (!controlledCharacter || !socketRef.current) return;
-    
+
     setCharacterLocked(true);
     addMessage(`🔒 You are now controlling ${controlledCharacter} for the rest of the game.`);
-    
+
     // Tell the server which character is now human-controlled
     socketRef.current.emit('set_human_character', { character: controlledCharacter });
     addMessage('🎭 When the detective asks this character questions, you will respond.');
@@ -130,13 +173,13 @@ function App() {
 
     const questionText = `🕵️ You asked ${selectedCharacter}: ${question}`;
     addMessage(questionText);
-    
+
     // Send question via Socket.IO
     socketRef.current.emit('ask', {
       character: selectedCharacter,
       question: question
     });
-    
+
     setQuestion('');
   };
 
@@ -150,7 +193,7 @@ function App() {
     });
 
     addMessage(`💬 You (as ${controlledCharacter}): ${answerText}`);
-    
+
     // Clear pending question
     setPendingQuestion('');
     setPendingCorrelationId('');
@@ -159,33 +202,74 @@ function App() {
 
   if (gameState === 'lobby') {
     return (
-      <div style={{minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-        <div style={{textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem'}}>
-          <h1 style={{fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#fbbf24'}}>🕵️ Detective Game</h1>
-          <p style={{marginBottom: '2rem', color: '#d1d5db'}}>Real-time multiplayer mystery game</p>
-          
-          <div style={{marginBottom: '1rem'}}>
-            <button 
+      <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
+          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#fbbf24' }}>🕵️ Detective Game</h1>
+          <p style={{ marginBottom: '2rem', color: '#d1d5db' }}>Real-time multiplayer mystery game</p>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                value={roomCode}
+                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
+                placeholder="Enter room code"
+                style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
+              />
+              <button
+                onClick={() => {
+                  if (!roomCode.trim()) return;
+                  setMyRoom(roomCode.trim());
+                  addMessage(`🔑 Set room: ${roomCode.trim()}`);
+                }}
+                style={{ backgroundColor: '#4b5563', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+              >Join</button>
+            </div>
+            <button
+              onClick={createRoom}
+              style={{ marginTop: '0.5rem', width: '100%', backgroundColor: '#059669', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+            >Create New Room</button>
+            {myRoom && (
+              <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#d1d5db' }}>Selected room: {myRoom}</div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: '1rem' }}>
+            <button
               onClick={joinAsDetective}
-              style={{width: '100%', backgroundColor: '#2563eb', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginBottom: '1rem'}}
+              style={{ width: '100%', backgroundColor: '#2563eb', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginBottom: '1rem' }}
             >
               🕵️ Play as Detective
             </button>
-            
-            <button 
+
+            <button
               onClick={joinAsMurderer}
-              style={{width: '100%', backgroundColor: '#dc2626', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+              style={{ width: '100%', backgroundColor: '#dc2626', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
             >
               🎭 Control a Character
             </button>
           </div>
 
-          <div style={{marginTop: '2rem', padding: '1rem', backgroundColor: '#374151', borderRadius: '0.25rem', fontSize: '0.875rem'}}>
+          <div style={{ marginBottom: '1rem' }}>
+            <button
+              onClick={() => quickMatch('detective')}
+              style={{ width: '100%', backgroundColor: '#1d4ed8', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 600 as any, border: 'none', cursor: 'pointer', marginBottom: '0.5rem' }}
+            >
+              🔀 Quick Match as Detective
+            </button>
+            <button
+              onClick={() => quickMatch('murderer')}
+              style={{ width: '100%', backgroundColor: '#b91c1c', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 600 as any, border: 'none', cursor: 'pointer' }}
+            >
+              🔀 Quick Match as Character
+            </button>
+          </div>
+
+          <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#374151', borderRadius: '0.25rem', fontSize: '0.875rem' }}>
             <p><strong>Detective:</strong> Ask questions to solve the mystery</p>
             <p><strong>Character Controller:</strong> Answer as your chosen character</p>
           </div>
 
-          <div style={{marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af'}}>
+          <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
             Backend: {API_URL}
           </div>
         </div>
@@ -194,19 +278,19 @@ function App() {
   }
 
   return (
-    <div style={{minHeight: '100vh', backgroundColor: '#111827', color: 'white'}}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white' }}>
       {/* Header */}
-      <div style={{backgroundColor: '#1f2937', padding: '1rem'}}>
-        <h1 style={{fontSize: '1.5rem', fontWeight: 'bold', color: '#fbbf24'}}>
+      <div style={{ backgroundColor: '#1f2937', padding: '1rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fbbf24' }}>
           🕵️ Detective Game - {role === 'detective' ? 'Detective Mode' : 'Character Controller'}
         </h1>
-        <div style={{display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem'}}>
-          <button 
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+          <button
             onClick={() => {
-              setGameState('lobby'); 
-              setRole(null); 
-              setMessages([]); 
-              setCharacterLocked(false); 
+              setGameState('lobby');
+              setRole(null);
+              setMessages([]);
+              setCharacterLocked(false);
               setControlledCharacter('');
               setPendingQuestion('');
               setPendingCorrelationId('');
@@ -215,22 +299,23 @@ function App() {
                 socketRef.current = null;
               }
               setConnected(false);
+              setMyRoom(null);
             }}
-            style={{fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer'}}
+            style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
           >
             ← Back to Lobby
           </button>
-          <div style={{fontSize: '0.875rem', color: connected ? '#10b981' : '#ef4444'}}>
+          <div style={{ fontSize: '0.875rem', color: connected ? '#10b981' : '#ef4444' }}>
             {connected ? '🟢 Connected' : '🔴 Disconnected'}
           </div>
         </div>
       </div>
 
-      <div style={{maxWidth: '64rem', margin: '0 auto', padding: '1rem'}}>
+      <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '1rem' }}>
         {/* Game Messages */}
-        <div style={{backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', height: '24rem', overflowY: 'auto', marginBottom: '1rem'}}>
+        <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', height: '24rem', overflowY: 'auto', marginBottom: '1rem' }}>
           {messages.map((msg, i) => (
-            <div key={i} style={{marginBottom: '0.5rem', fontSize: '0.875rem', fontFamily: 'monospace'}}>
+            <div key={i} style={{ marginBottom: '0.5rem', fontSize: '0.875rem', fontFamily: 'monospace' }}>
               {msg}
             </div>
           ))}
@@ -238,15 +323,15 @@ function App() {
 
         {/* Detective Interface */}
         {role === 'detective' && (
-          <div style={{backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem'}}>
-            <h3 style={{fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem'}}>🔍 Interrogation</h3>
-            
-            <div style={{marginBottom: '1rem'}}>
-              <label style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem'}}>Select Character to Question:</label>
-              <select 
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>🔍 Interrogation</h3>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Select Character to Question:</label>
+              <select
                 value={selectedCharacter}
                 onChange={(e) => setSelectedCharacter(e.target.value)}
-                style={{width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white'}}
+                style={{ width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
               >
                 <option value="">Choose a character...</option>
                 {characters.map(char => (
@@ -255,19 +340,19 @@ function App() {
               </select>
             </div>
 
-            <div style={{display: 'flex', gap: '0.5rem'}}>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && askQuestion()}
                 placeholder="Ask your question..."
-                style={{flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white'}}
+                style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
               />
-              <button 
+              <button
                 onClick={askQuestion}
                 disabled={!question.trim() || !selectedCharacter || !connected}
-                style={{backgroundColor: (!question.trim() || !selectedCharacter || !connected) ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                style={{ backgroundColor: (!question.trim() || !selectedCharacter || !connected) ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
               >
                 Ask
               </button>
@@ -277,21 +362,21 @@ function App() {
 
         {/* Murderer Interface */}
         {role === 'murderer' && (
-          <div style={{backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem'}}>
-            <h3 style={{fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem'}}>🎭 Character Control</h3>
-            
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>🎭 Character Control</h3>
+
             {!characterLocked ? (
               <div>
-                <p style={{color: '#d1d5db', marginBottom: '1rem'}}>
+                <p style={{ color: '#d1d5db', marginBottom: '1rem' }}>
                   Select which character you want to control. Once selected, this choice is permanent for the game.
                 </p>
-                
-                <div style={{marginBottom: '1rem'}}>
-                  <label style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem'}}>Choose Your Character:</label>
-                  <select 
+
+                <div style={{ marginBottom: '1rem' }}>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Choose Your Character:</label>
+                  <select
                     value={controlledCharacter}
                     onChange={(e) => setControlledCharacter(e.target.value)}
-                    style={{width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white'}}
+                    style={{ width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
                   >
                     <option value="">Select a character...</option>
                     {characters.map(char => (
@@ -300,53 +385,53 @@ function App() {
                   </select>
                 </div>
 
-                <button 
+                <button
                   onClick={lockCharacter}
                   disabled={!controlledCharacter || !connected}
-                  style={{backgroundColor: (!controlledCharacter || !connected) ? '#4b5563' : '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                  style={{ backgroundColor: (!controlledCharacter || !connected) ? '#4b5563' : '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
                 >
                   🔒 Lock Character Choice
                 </button>
               </div>
             ) : (
               <div>
-                <div style={{marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#059669', borderRadius: '0.25rem'}}>
-                  <p style={{fontSize: '0.875rem', margin: 0}}>
+                <div style={{ marginBottom: '1rem', padding: '0.75rem', backgroundColor: '#059669', borderRadius: '0.25rem' }}>
+                  <p style={{ fontSize: '0.875rem', margin: 0 }}>
                     <strong>🔒 You are controlling: {controlledCharacter}</strong>
                   </p>
-                  <p style={{fontSize: '0.75rem', margin: '0.25rem 0 0 0', opacity: 0.9}}>
+                  <p style={{ fontSize: '0.75rem', margin: '0.25rem 0 0 0', opacity: 0.9 }}>
                     Character locked for the rest of the game
                   </p>
                 </div>
-                
-                <p style={{color: '#d1d5db', marginBottom: '1rem'}}>
-                  Wait for the detective to ask <strong>{controlledCharacter}</strong> a question. 
+
+                <p style={{ color: '#d1d5db', marginBottom: '1rem' }}>
+                  Wait for the detective to ask <strong>{controlledCharacter}</strong> a question.
                   When they do, you'll be able to respond as this character.
                 </p>
 
                 {pendingQuestion && (
-                  <div style={{marginTop: '1rem', padding: '0.75rem', backgroundColor: '#7c2d12', borderRadius: '0.25rem'}}>
-                    <p style={{fontSize: '0.875rem', marginBottom: '0.5rem'}}>
+                  <div style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#7c2d12', borderRadius: '0.25rem' }}>
+                    <p style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>
                       <strong>❓ Question for {controlledCharacter}:</strong>
                     </p>
-                    <p style={{fontSize: '0.875rem', marginBottom: '1rem', fontStyle: 'italic', backgroundColor: '#451a03', padding: '0.5rem', borderRadius: '0.25rem'}}>
+                    <p style={{ fontSize: '0.875rem', marginBottom: '1rem', fontStyle: 'italic', backgroundColor: '#451a03', padding: '0.5rem', borderRadius: '0.25rem' }}>
                       "{pendingQuestion}"
                     </p>
-                    
-                    <div style={{marginBottom: '0.5rem'}}>
-                      <label style={{display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem'}}>Your Response as {controlledCharacter}:</label>
+
+                    <div style={{ marginBottom: '0.5rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Your Response as {controlledCharacter}:</label>
                       <textarea
                         value={answerText}
                         onChange={(e) => setAnswerText(e.target.value)}
                         placeholder={`Answer as ${controlledCharacter}...`}
-                        style={{width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white', minHeight: '4rem', resize: 'vertical'}}
+                        style={{ width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white', minHeight: '4rem', resize: 'vertical' }}
                       />
                     </div>
-                    
-                    <button 
+
+                    <button
                       onClick={sendAnswer}
                       disabled={!answerText.trim()}
-                      style={{backgroundColor: !answerText.trim() ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer'}}
+                      style={{ backgroundColor: !answerText.trim() ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
                     >
                       Send Response
                     </button>
