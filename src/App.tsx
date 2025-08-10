@@ -20,6 +20,8 @@ function App() {
   const [pendingQuestion, setPendingQuestion] = useState('');
   const [pendingCorrelationId, setPendingCorrelationId] = useState('');
   const [answerText, setAnswerText] = useState('');
+  const [shakeDetective, setShakeDetective] = useState('');
+  const [shakeMurderer, setShakeMurderer] = useState('');
 
   const socketRef = useRef<any | null>(null);
   const controlledRef = useRef<string>("");
@@ -391,7 +393,11 @@ function App() {
                 return (
                   <button
                     key={char}
-                    onClick={() => setSelectedCharacter(char)}
+                    onClick={() => {
+                      setSelectedCharacter(char);
+                      setShakeDetective(char);
+                      setTimeout(() => setShakeDetective(''), 400);
+                    }}
                     style={{
                       backgroundColor: '#111827',
                       border: `2px solid ${isSelected ? '#fbbf24' : '#374151'}`,
@@ -403,7 +409,7 @@ function App() {
                     }}
                     aria-pressed={isSelected}
                   >
-                    <div style={{
+                    <div className={shakeDetective === char ? 'tile-shake' : ''} style={{
                       width: '100%',
                       aspectRatio: '1 / 1',
                       backgroundColor: '#1f2937',
@@ -465,7 +471,11 @@ function App() {
                     return (
                       <button
                         key={char}
-                        onClick={() => setControlledCharacter(char)}
+                        onClick={() => {
+                          setControlledCharacter(char);
+                          setShakeMurderer(char);
+                          setTimeout(() => setShakeMurderer(''), 400);
+                        }}
                         style={{
                           backgroundColor: '#111827',
                           border: `2px solid ${isSelected ? '#ef4444' : '#374151'}`,
@@ -477,7 +487,7 @@ function App() {
                         }}
                         aria-pressed={isSelected}
                       >
-                        <div style={{
+                        <div className={shakeMurderer === char ? 'tile-shake' : ''} style={{
                           width: '100%',
                           aspectRatio: '1 / 1',
                           backgroundColor: '#1f2937',
