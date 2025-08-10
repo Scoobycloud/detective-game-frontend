@@ -93,6 +93,8 @@ function App() {
             addMessage(`❓ Detective asks ${character}: "${question}"`);
             setPendingQuestion(question);
             setPendingCorrelationId(correlation_id);
+            // send debug ack so server can confirm delivery
+            socket.emit('murderer_ack', { correlation_id });
           } else {
             addMessage(`[debug] Ignored question for ${character}; currently controlling ${current}`);
           }
