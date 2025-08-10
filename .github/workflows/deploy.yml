@@ -1,0 +1,26 @@
+name: Deploy Frontend (Vercel Hook)
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "package.json"
+      - "package-lock.json"
+      - "tsconfig.json"
+      - "vercel.json"
+
+jobs:
+  trigger-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Vercel Deploy Hook
+        run: |
+          if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
+            echo "VERCEL_DEPLOY_HOOK_URL is not set as a repository secret" >&2
+            exit 1
+          fi
+          curl -X POST -s -S "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
+
+
