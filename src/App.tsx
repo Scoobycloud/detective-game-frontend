@@ -98,7 +98,8 @@ function App() {
         socketRef.current = null;
       }
     };
-  }, [role, controlledCharacter, API_URL, myRoom]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [role, API_URL, myRoom]);
 
   const addMessage = (msg: string) => {
     const timestamp = new Date().toLocaleTimeString();
