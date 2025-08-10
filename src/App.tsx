@@ -22,6 +22,7 @@ function App() {
   const [answerText, setAnswerText] = useState('');
 
   const socketRef = useRef<any | null>(null);
+  const controlledRef = useRef<string>("");
 
   const characters = [
     'Mrs. Bellamy',
@@ -31,6 +32,10 @@ function App() {
   ];
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    controlledRef.current = controlledCharacter;
+  }, [controlledCharacter]);
 
   useEffect(() => {
     addMessage('🎮 Welcome to Detective Game Online!');
@@ -82,10 +87,15 @@ function App() {
 
       // Backend sends 'question_for_murderer' when detective asks human-controlled character
       socket.on('question_for_murderer', ({ correlation_id, character, question }: { correlation_id: string; character: string; question: string }) => {
-        if (role === 'murderer' && character === controlledCharacter) {
-          addMessage(`❓ Detective asks ${character}: "${question}"`);
-          setPendingQuestion(question);
-          setPendingCorrelationId(correlation_id);
+        if (role === 'murderer') {
+          const current = controlledRef.current;
+          if (!current || current === character) {
+            addMessage(`❓ Detective asks ${character}: "${question}"`);
+            setPendingQuestion(question);
+            setPendingCorrelationId(correlation_id);
+          } else {
+            addMessage(`[debug] Ignored question for ${character}; currently controlling ${current}`);
+          }
         }
       });
 
