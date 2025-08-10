@@ -31,6 +31,14 @@ function App() {
     'Dr. Adrian Blackwood'
   ];
 
+  // Optional images (place under public/images/characters)
+  const characterImages: Record<string, string> = {
+    'Mrs. Bellamy': '/images/characters/mrs_bellamy.png',
+    'Mr. Holloway': '/images/characters/mr_holloway.png',
+    'Tommy the Janitor': '/images/characters/tommy_the_janitor.png',
+    'Dr. Adrian Blackwood': '/images/characters/dr_adrian_blackwood.png',
+  };
+
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
   useEffect(() => {
@@ -401,14 +409,18 @@ function App() {
                       backgroundColor: '#1f2937',
                       borderRadius: '0.25rem',
                       marginBottom: '0.5rem',
+                      overflow: 'hidden',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.875rem',
-                      color: '#9ca3af'
+                      justifyContent: 'center'
                     }}>
-                      {/* Placeholder portrait area */}
-                      {char.split(' ').map(w => w[0]).join('').slice(0,3)}
+                      {characterImages[char] ? (
+                        <img src={characterImages[char]} alt={char} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ) : (
+                        <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                          {char.split(' ').map(w => w[0]).join('').slice(0, 3)}
+                        </div>
+                      )}
                     </div>
                     <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
                   </button>
@@ -471,13 +483,18 @@ function App() {
                           backgroundColor: '#1f2937',
                           borderRadius: '0.25rem',
                           marginBottom: '0.5rem',
+                          overflow: 'hidden',
                           display: 'flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.875rem',
-                          color: '#9ca3af'
+                          justifyContent: 'center'
                         }}>
-                          {char.split(' ').map(w => w[0]).join('').slice(0,3)}
+                          {characterImages[char] ? (
+                            <img src={characterImages[char]} alt={char} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                              {char.split(' ').map(w => w[0]).join('').slice(0, 3)}
+                            </div>
+                          )}
                         </div>
                         <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
                       </button>
