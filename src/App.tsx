@@ -9,6 +9,7 @@ function App() {
   const [messages, setMessages] = useState<string[]>([]);
   const [roomCode, setRoomCode] = useState('');
   const [myRoom, setMyRoom] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
   const [question, setQuestion] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState('');
   const [connected, setConnected] = useState(false);
@@ -205,6 +206,10 @@ function App() {
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#fbbf24' }}>🕵️ Detective Game</h1>
+          <button
+            onClick={() => setShowHelp(true)}
+            style={{ backgroundColor: '#4b5563', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontWeight: 600 }}
+          >❓ How to Play</button>
           <p style={{ marginBottom: '2rem', color: '#d1d5db' }}>Real-time multiplayer mystery game</p>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -273,6 +278,27 @@ function App() {
             Backend: {API_URL}
           </div>
         </div>
+        {showHelp && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 50 }}>
+            <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '42rem', borderRadius: '0.5rem', padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fbbf24' }}>How to Play</h2>
+                <button onClick={() => setShowHelp(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
+              </div>
+              <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                <p style={{ color: '#d1d5db' }}>Choose a role and either quick-match or share a room code to play with a friend.</p>
+                <ul style={{ textAlign: 'left', lineHeight: 1.6 }}>
+                  <li><strong>Roles:</strong> Detective asks questions; Character Controller answers as a chosen suspect.</li>
+                  <li><strong>Quick Match:</strong> Click Quick Match as Detective/Character to pair automatically.</li>
+                  <li><strong>Room Code:</strong> Create a room, share the code, both join it, then select roles.</li>
+                  <li><strong>Detective:</strong> Pick a character, type a question, click Ask.</li>
+                  <li><strong>Character Controller:</strong> Lock a character. When asked, type and send your response.</li>
+                  <li><strong>Tips:</strong> If no human reply, AI will answer. Use Back to Lobby to restart.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -308,6 +334,10 @@ function App() {
           <div style={{ fontSize: '0.875rem', color: connected ? '#10b981' : '#ef4444' }}>
             {connected ? '🟢 Connected' : '🔴 Disconnected'}
           </div>
+          <button
+            onClick={() => setShowHelp(true)}
+            style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+          >❓ How to Play</button>
         </div>
       </div>
 
@@ -442,6 +472,27 @@ function App() {
           </div>
         )}
       </div>
+      {showHelp && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 50 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '42rem', borderRadius: '0.5rem', padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#fbbf24' }}>How to Play</h2>
+              <button onClick={() => setShowHelp(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
+            </div>
+            <div style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+              <p style={{ color: '#d1d5db' }}>Choose a role and either quick-match or share a room code to play with a friend.</p>
+              <ul style={{ textAlign: 'left', lineHeight: 1.6 }}>
+                <li><strong>Roles:</strong> Detective asks questions; Character Controller answers as a chosen suspect.</li>
+                <li><strong>Quick Match:</strong> Click Quick Match as Detective/Character to pair automatically.</li>
+                <li><strong>Room Code:</strong> Create a room, share the code, both join it, then select roles.</li>
+                <li><strong>Detective:</strong> Pick a character, type a question, click Ask.</li>
+                <li><strong>Character Controller:</strong> Lock a character. When asked, type and send your response.</li>
+                <li><strong>Tips:</strong> If no human reply, AI will answer. Use Back to Lobby to restart.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
