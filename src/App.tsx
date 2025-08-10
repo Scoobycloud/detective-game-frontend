@@ -373,20 +373,47 @@ function App() {
         {/* Detective Interface */}
         {role === 'detective' && (
           <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>🔍 Interrogation</h3>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.75rem' }}>🔍 Interrogation</h3>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Select Character to Question:</label>
-              <select
-                value={selectedCharacter}
-                onChange={(e) => setSelectedCharacter(e.target.value)}
-                style={{ width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
-              >
-                <option value="">Choose a character...</option>
-                {characters.map(char => (
-                  <option key={char} value={char}>{char}</option>
-                ))}
-              </select>
+            <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem', color: '#d1d5db' }}>Select a suspect by clicking their card:</div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+              {characters.map((char) => {
+                const isSelected = selectedCharacter === char;
+                return (
+                  <button
+                    key={char}
+                    onClick={() => setSelectedCharacter(char)}
+                    style={{
+                      backgroundColor: '#111827',
+                      border: `2px solid ${isSelected ? '#fbbf24' : '#374151'}`,
+                      color: 'white',
+                      borderRadius: '0.5rem',
+                      padding: '0.5rem',
+                      cursor: 'pointer',
+                      textAlign: 'center'
+                    }}
+                    aria-pressed={isSelected}
+                  >
+                    <div style={{
+                      width: '100%',
+                      aspectRatio: '1 / 1',
+                      backgroundColor: '#1f2937',
+                      borderRadius: '0.25rem',
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.875rem',
+                      color: '#9ca3af'
+                    }}>
+                      {/* Placeholder portrait area */}
+                      {char.split(' ').map(w => w[0]).join('').slice(0,3)}
+                    </div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
+                  </button>
+                );
+              })}
             </div>
 
             <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -395,7 +422,7 @@ function App() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && askQuestion()}
-                placeholder="Ask your question..."
+                placeholder={selectedCharacter ? `Ask ${selectedCharacter}...` : 'Select a suspect, then ask your question...'}
                 style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
               />
               <button
@@ -416,22 +443,46 @@ function App() {
 
             {!characterLocked ? (
               <div>
-                <p style={{ color: '#d1d5db', marginBottom: '1rem' }}>
+                <p style={{ color: '#d1d5db', marginBottom: '0.75rem' }}>
                   Select which character you want to control. Once selected, this choice is permanent for the game.
                 </p>
 
-                <div style={{ marginBottom: '1rem' }}>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Choose Your Character:</label>
-                  <select
-                    value={controlledCharacter}
-                    onChange={(e) => setControlledCharacter(e.target.value)}
-                    style={{ width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
-                  >
-                    <option value="">Select a character...</option>
-                    {characters.map(char => (
-                      <option key={char} value={char}>{char}</option>
-                    ))}
-                  </select>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {characters.map((char) => {
+                    const isSelected = controlledCharacter === char;
+                    return (
+                      <button
+                        key={char}
+                        onClick={() => setControlledCharacter(char)}
+                        style={{
+                          backgroundColor: '#111827',
+                          border: `2px solid ${isSelected ? '#ef4444' : '#374151'}`,
+                          color: 'white',
+                          borderRadius: '0.5rem',
+                          padding: '0.5rem',
+                          cursor: 'pointer',
+                          textAlign: 'center'
+                        }}
+                        aria-pressed={isSelected}
+                      >
+                        <div style={{
+                          width: '100%',
+                          aspectRatio: '1 / 1',
+                          backgroundColor: '#1f2937',
+                          borderRadius: '0.25rem',
+                          marginBottom: '0.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.875rem',
+                          color: '#9ca3af'
+                        }}>
+                          {char.split(' ').map(w => w[0]).join('').slice(0,3)}
+                        </div>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
+                      </button>
+                    );
+                  })}
                 </div>
 
                 <button
