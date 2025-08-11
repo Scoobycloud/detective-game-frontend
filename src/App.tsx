@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './App.css';
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from './firebase';
 
 // Real-time Detective Game Interface with Socket.IO
 function App() {
@@ -22,6 +23,7 @@ function App() {
   const [answerText, setAnswerText] = useState('');
   const [shakeDetective, setShakeDetective] = useState('');
   const [shakeMurderer, setShakeMurderer] = useState('');
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   const socketRef = useRef<any | null>(null);
   const controlledRef = useRef<string>("");
@@ -48,6 +50,13 @@ function App() {
   }, [controlledCharacter]);
 
   useEffect(() => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      setUserEmail(user?.email ?? null);
+    });
+    return () => unsub();
+  }, []);
+
+  useEffect(() => {
     addMessage('🎮 Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
   }, []);
@@ -58,7 +67,15 @@ function App() {
       addMessage('🔗 Connecting to game server...');
 
       socketRef.current = io(API_URL, {
-        transports: ['websocket']
+        transports: ['websocket'],
+        auth: async (cb: any) => {
+          try {
+            const token = await auth.currentUser?.getIdToken();
+            cb({ idToken: token });
+          } catch {
+            cb({});
+          }
+        }
       });
 
       const socket = socketRef.current;
@@ -341,6 +358,9 @@ function App() {
             🕵️ Detective Game - {role === 'detective' ? 'Detective Mode' : 'Character Controller'}
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
+            <div style={{ marginRight: 'auto', fontSize: '0.875rem', color: '#d1d5db' }}>
+              {userEmail ? `Signed in as ${userEmail}` : 'Not signed in'}
+            </div>
             <button
               onClick={() => {
                 setGameState('lobby');
@@ -368,6 +388,11 @@ function App() {
               onClick={() => setShowHelp(true)}
               style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
             >❓ How to Play</button>
+            {userEmail ? (
+              <button onClick={() => signOut(auth)} style={{ fontSize: '0.875rem', backgroundColor: '#374151', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Sign out</button>
+            ) : (
+              <button onClick={() => signInWithPopup(auth, provider)} style={{ fontSize: '0.875rem', backgroundColor: '#059669', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Sign in</button>
+            )}
           </div>
         </div>
       </div>
