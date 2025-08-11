@@ -24,6 +24,7 @@ function App() {
   const [shakeDetective, setShakeDetective] = useState('');
   const [shakeMurderer, setShakeMurderer] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [authBusy, setAuthBusy] = useState(false);
 
   const socketRef = useRef<any | null>(null);
   const controlledRef = useRef<string>("");
@@ -56,6 +57,27 @@ function App() {
     return () => unsub();
   }, []);
 
+  const handleSignIn = async () => {
+    try {
+      setAuthBusy(true);
+      await signInWithPopup(auth, provider);
+      addMessage('✅ Signed in');
+    } catch (e: any) {
+      addMessage(`❌ Sign-in failed: ${e?.message || e}`);
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      addMessage('👋 Signed out');
+    } catch (e: any) {
+      addMessage(`❌ Sign-out failed: ${e?.message || e}`);
+    }
+  };
+
   useEffect(() => {
     addMessage('🎮 Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
@@ -80,12 +102,13 @@ function App() {
 
       const socket = socketRef.current;
 
-      socket.on('connect', () => {
+      socket.on('connect', async () => {
         setConnected(true);
         addMessage('✅ Connected to game server!');
 
         // Join as the selected role in specified room
-        socket.emit('join_role', { role, room: myRoom });
+        const idToken = await auth.currentUser?.getIdToken();
+        socket.emit('join_role', { role, room: myRoom, idToken });
         addMessage(`🎭 Joined as ${role}`);
       });
 
@@ -258,7 +281,15 @@ function App() {
           >❓ How to Play</button>
           <p style={{ marginBottom: '2rem', color: '#d1d5db' }}>Real-time multiplayer mystery game</p>
 
-          <div style={{ marginBottom: '1rem' }}>
+          {!userEmail && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button onClick={handleSignIn} disabled={authBusy} style={{ width: '100%', backgroundColor: authBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
+                {authBusy ? 'Signing in…' : 'Sign in with Google to Play'}
+              </button>
+            </div>
+          )}
+
+          <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 value={roomCode}
@@ -284,7 +315,7 @@ function App() {
             )}
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
+          <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
             <button
               onClick={joinAsDetective}
               style={{ width: '100%', backgroundColor: '#2563eb', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: 'none', cursor: 'pointer', marginBottom: '1rem' }}
@@ -389,9 +420,9 @@ function App() {
               style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
             >❓ How to Play</button>
             {userEmail ? (
-              <button onClick={() => signOut(auth)} style={{ fontSize: '0.875rem', backgroundColor: '#374151', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Sign out</button>
+              <button onClick={handleSignOut} style={{ fontSize: '0.875rem', backgroundColor: '#374151', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Sign out</button>
             ) : (
-              <button onClick={() => signInWithPopup(auth, provider)} style={{ fontSize: '0.875rem', backgroundColor: '#059669', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Sign in</button>
+              <button onClick={handleSignIn} disabled={authBusy} style={{ fontSize: '0.875rem', backgroundColor: authBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>{authBusy ? 'Signing in…' : 'Sign in'}</button>
             )}
           </div>
         </div>
