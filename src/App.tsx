@@ -29,6 +29,22 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
+  const goToLobby = () => {
+    setGameState('lobby');
+    setRole(null);
+    setMessages([]);
+    setCharacterLocked(false);
+    setControlledCharacter('');
+    setPendingQuestion('');
+    setPendingCorrelationId('');
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+    setConnected(false);
+    setMyRoom(null);
+  };
+
   const socketRef = useRef<any | null>(null);
   const controlledRef = useRef<string>("");
 
@@ -56,6 +72,9 @@ function App() {
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       setUserEmail(user?.email ?? null);
+      if (!user) {
+        goToLobby();
+      }
     });
     return () => unsub();
   }, []);
@@ -88,6 +107,7 @@ function App() {
     try {
       await signOut(auth);
       addMessage('👋 Signed out');
+      goToLobby();
     } catch (e: any) {
       addMessage(`❌ Sign-out failed: ${e?.message || e}`);
     }
@@ -408,21 +428,7 @@ function App() {
               {userEmail ? `Signed in as ${userEmail}` : 'Not signed in'}
             </div>
             <button
-              onClick={() => {
-                setGameState('lobby');
-                setRole(null);
-                setMessages([]);
-                setCharacterLocked(false);
-                setControlledCharacter('');
-                setPendingQuestion('');
-                setPendingCorrelationId('');
-                if (socketRef.current) {
-                  socketRef.current.disconnect();
-                  socketRef.current = null;
-                }
-                setConnected(false);
-                setMyRoom(null);
-              }}
+              onClick={goToLobby}
               style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
             >
               ← Back to Lobby
