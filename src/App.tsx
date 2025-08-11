@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './App.css';
-import { auth, provider, signInWithPopup, onAuthStateChanged, signOut } from './firebase';
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult } from './firebase';
 
 // Real-time Detective Game Interface with Socket.IO
 function App() {
@@ -57,10 +57,22 @@ function App() {
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    // Handle redirect result for Safari/iOS popup blockers
+    getRedirectResult(auth).catch(() => {});
+  }, []);
+
   const handleSignIn = async () => {
     try {
       setAuthBusy(true);
-      await signInWithPopup(auth, provider);
+      // Try popup first; if blocked, fall back to redirect
+      await signInWithPopup(auth, provider).catch(async (err) => {
+        if (err?.code && String(err.code).includes('popup')) {
+          await signInWithRedirect(auth, provider);
+        } else {
+          throw err;
+        }
+      });
       addMessage('✅ Signed in');
     } catch (e: any) {
       addMessage(`❌ Sign-in failed: ${e?.message || e}`);
