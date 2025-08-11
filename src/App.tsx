@@ -104,15 +104,7 @@ function App() {
       addMessage('🔗 Connecting to game server...');
 
       socketRef.current = io(API_URL, {
-        transports: ['websocket'],
-        auth: async (cb: any) => {
-          try {
-            const token = await auth.currentUser?.getIdToken();
-            cb({ idToken: token });
-          } catch {
-            cb({});
-          }
-        }
+        transports: ['websocket']
       });
 
       const socket = socketRef.current;
