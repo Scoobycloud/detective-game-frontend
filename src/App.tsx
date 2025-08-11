@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './App.css';
-import { auth, provider, signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult } from './firebase';
+import { auth, provider, signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword, signInWithEmailAndPassword } from './firebase';
 
 // Real-time Detective Game Interface with Socket.IO
 function App() {
@@ -25,6 +25,8 @@ function App() {
   const [shakeMurderer, setShakeMurderer] = useState('');
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [authBusy, setAuthBusy] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const socketRef = useRef<any | null>(null);
   const controlledRef = useRef<string>("");
@@ -59,7 +61,7 @@ function App() {
 
   useEffect(() => {
     // Handle redirect result for Safari/iOS popup blockers
-    getRedirectResult(auth).catch(() => {});
+    getRedirectResult(auth).catch(() => { });
   }, []);
 
   const handleSignIn = async () => {
@@ -295,9 +297,17 @@ function App() {
 
           {!userEmail && (
             <div style={{ marginBottom: '1rem' }}>
-              <button onClick={handleSignIn} disabled={authBusy} style={{ width: '100%', backgroundColor: authBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-                {authBusy ? 'Signing in…' : 'Sign in with Google to Play'}
-              </button>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: '0.5rem', backgroundColor:'#374151', color: 'white', border: '1px solid #4b5563', borderRadius: '0.375rem' }} />
+                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: '0.5rem', backgroundColor:'#374151', color: 'white', border: '1px solid #4b5563', borderRadius: '0.375rem' }} />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={async ()=>{ try { setAuthBusy(true); await signInWithEmailAndPassword(auth, email, password); } catch(e:any){ addMessage(`❌ Email sign-in failed: ${e?.message||e}`)} finally{ setAuthBusy(false);} }} disabled={authBusy} style={{ flex:1, backgroundColor: authBusy ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>Sign in</button>
+                  <button onClick={async ()=>{ try { setAuthBusy(true); await createUserWithEmailAndPassword(auth, email, password); } catch(e:any){ addMessage(`❌ Sign-up failed: ${e?.message||e}`)} finally{ setAuthBusy(false);} }} disabled={authBusy} style={{ flex:1, backgroundColor: authBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>Sign up</button>
+                </div>
+                <button onClick={handleSignIn} disabled={authBusy} style={{ width: '100%', backgroundColor: authBusy ? '#4b5563' : '#f59e0b', color: 'black', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontWeight:600 }}>
+                  {authBusy ? 'Signing in…' : 'Continue with Google'}
+                </button>
+              </div>
             </div>
           )}
 
