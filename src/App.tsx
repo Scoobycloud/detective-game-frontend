@@ -28,6 +28,7 @@ function App() {
   const [authBusy, setAuthBusy] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [clues, setClues] = useState<Array<{ text: string; type?: string; source?: string; timestamp?: string }>>([]);
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -155,6 +156,11 @@ function App() {
         addMessage(`💬 ${character}: ${answer}`);
       });
 
+      socket.on('clues_updated', () => {
+        // refetch clues when server tells us they changed
+        void fetchClues();
+      });
+
       socket.on('character_locked', ({ character }: { character: string }) => {
         if (role === 'murderer') {
           setCharacterLocked(true);
@@ -279,6 +285,22 @@ function App() {
 
     setQuestion('');
   };
+
+  const fetchClues = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/clues`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setClues(data);
+    } catch { }
+  };
+
+  useEffect(() => {
+    if (!myRoom) return;
+    void fetchClues();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myRoom]);
 
   const sendAnswer = () => {
     if (!answerText.trim() || !pendingCorrelationId || !socketRef.current) return;
@@ -530,6 +552,34 @@ function App() {
                 Ask
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Clues Panel */}
+        {myRoom && (
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧩 Clues</h3>
+              <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+            </div>
+            {clues.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No clues yet. Ask questions to gather information.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {clues.map((c, idx) => (
+                  <div key={idx} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#d1d5db' }}>{c.source || 'Unknown'}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{c.type || 'FACT'}</span>
+                    </div>
+                    <div style={{ fontSize: '0.875rem' }}>{c.text}</div>
+                    {c.timestamp && (
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>{new Date(c.timestamp).toLocaleString()}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 

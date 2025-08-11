@@ -1,14 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signOut,
-  signInWithRedirect,
-  getRedirectResult,
-  setPersistence,
-  browserLocalPersistence,
+    getAuth,
+    signInWithPopup,
+    GoogleAuthProvider,
+    onAuthStateChanged,
+    signOut,
+    signInWithRedirect,
+    getRedirectResult,
+    setPersistence,
+    browserLocalPersistence,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
 } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -22,11 +24,19 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-setPersistence(auth, browserLocalPersistence).catch(() => {});
+setPersistence(auth, browserLocalPersistence).catch(() => { });
 
 export const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ prompt: 'select_account' });
 
-export { signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult };
+export {
+    signInWithPopup,
+    onAuthStateChanged,
+    signOut,
+    signInWithRedirect,
+    getRedirectResult,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+};
 
 
