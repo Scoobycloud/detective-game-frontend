@@ -331,6 +331,42 @@ function App() {
     }
   };
 
+  const typeOutRecord = (full: string) => {
+    if (recordTimerRef.current) {
+      clearInterval(recordTimerRef.current);
+      recordTimerRef.current = null;
+    }
+    const sentences = full.match(/[^.]+[.]?/g) || [full];
+    let sentenceIndex = 0;
+    let displayed = '';
+
+    const typeSentence = (sentence: string) => {
+      let i = 0;
+      recordTimerRef.current = setInterval(() => {
+        i += 2; // type two chars per tick
+        const chunk = sentence.slice(0, i);
+        setRecordText(displayed + chunk);
+        playKeyClick();
+        if (i >= sentence.length) {
+          clearInterval(recordTimerRef.current);
+          recordTimerRef.current = null;
+          displayed += sentence;
+          sentenceIndex += 1;
+          if (sentenceIndex < sentences.length) {
+            // pause 500ms between sentences
+            recordTimerRef.current = setTimeout(() => {
+              typeSentence(sentences[sentenceIndex]);
+            }, 500) as unknown as number;
+          }
+        }
+      }, 20);
+    };
+
+    if (sentences.length > 0) {
+      typeSentence(sentences[0]);
+    }
+  };
+
   const sendAnswer = () => {
     if (!answerText.trim() || !pendingCorrelationId || !socketRef.current) return;
 
@@ -676,14 +712,7 @@ function App() {
                         if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
                       }
                     } catch { }
-                    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
-                    let idx = 0;
-                    recordTimerRef.current = setInterval(() => {
-                      idx += 2;
-                      setRecordText(full.slice(0, idx));
-                      playKeyClick();
-                      if (idx >= full.length) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
-                    }, 20);
+                    typeOutRecord(full);
                   }} style={{ backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>
                     {profileLoading ? 'Loading…' : 'Get police record'}
                   </button>
