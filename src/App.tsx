@@ -33,6 +33,8 @@ function App() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
   const [recordText, setRecordText] = useState('');
+  const audioCtxRef = useRef<any | null>(null);
+  const recordTimerRef = useRef<any | null>(null);
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -305,6 +307,29 @@ function App() {
     void fetchClues();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
+
+  const playKeyClick = () => {
+    try {
+      const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!AC) return;
+      if (!audioCtxRef.current) audioCtxRef.current = new AC();
+      const ctx = audioCtxRef.current as AudioContext;
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(1200, now);
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.05, now + 0.001);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.03);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.035);
+    } catch {
+      // ignore
+    }
+  };
 
   const sendAnswer = () => {
     if (!answerText.trim() || !pendingCorrelationId || !socketRef.current) return;
@@ -611,7 +636,7 @@ function App() {
             <div style={{ width: '100%', maxWidth: '42rem', backgroundColor: '#0b1220', color: 'white', borderRadius: '0.5rem', border: '1px solid #334155', boxShadow: '0 10px 25px rgba(0,0,0,0.6)' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: '1px solid #1f2937' }}>
                 <div style={{ fontWeight: 700, color: '#34d399' }}>POLICE COMPUTER // SUBJECT PROFILE</div>
-                <button onClick={() => { setShowProfile(false); setProfile(null); setRecordText(''); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
+                <button onClick={() => { if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; } setShowProfile(false); setProfile(null); setRecordText(''); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '10rem 1fr', gap: '1rem', padding: '1rem' }}>
                 <div style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '0.375rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '10rem', overflow: 'hidden' }}>
@@ -639,11 +664,21 @@ function App() {
                     // teleprompter effect
                     const full = (profile?.record || 'No police record found.').toString();
                     setRecordText('');
+                    // prepare audio context
+                    try {
+                      const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
+                      if (AC) {
+                        if (!audioCtxRef.current) audioCtxRef.current = new AC();
+                        if (audioCtxRef.current.state === 'suspended') await audioCtxRef.current.resume();
+                      }
+                    } catch { }
+                    if (recordTimerRef.current) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
                     let idx = 0;
-                    const timer = setInterval(() => {
+                    recordTimerRef.current = setInterval(() => {
                       idx += 2;
                       setRecordText(full.slice(0, idx));
-                      if (idx >= full.length) clearInterval(timer);
+                      playKeyClick();
+                      if (idx >= full.length) { clearInterval(recordTimerRef.current); recordTimerRef.current = null; }
                     }, 20);
                   }} style={{ backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>
                     {profileLoading ? 'Loading…' : 'Get police record'}
