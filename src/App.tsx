@@ -640,11 +640,15 @@ function App() {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '10rem 1fr', gap: '1rem', padding: '1rem' }}>
                 <div style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '0.375rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '10rem', overflow: 'hidden' }}>
-                  {profile?.image_url ? (
-                    <img src={profile.image_url} alt={profile?.name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ color: '#64748b', fontSize: '0.875rem' }}>No Photo</div>
-                  )}
+                  {(() => {
+                    const fallback = profile?.name ? characterImages[profile.name] : undefined;
+                    const src = (profile?.image_url && profile.image_url.trim()) ? profile.image_url : fallback;
+                    return src ? (
+                      <img src={src} alt={profile?.name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <div style={{ color: '#64748b', fontSize: '0.875rem' }}>No Photo</div>
+                    );
+                  })()}
                 </div>
                 <div>
                   <div style={{ display: 'grid', gap: '0.25rem', marginBottom: '0.5rem' }}>
