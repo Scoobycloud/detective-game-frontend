@@ -1,6 +1,12 @@
 name: Deploy Frontend (Vercel Hook)
 
 on:
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for deployment"
+        required: false
+        type: string
   push:
     branches: [ "main" ]
     paths:
@@ -14,7 +20,14 @@ on:
 jobs:
   trigger-deploy:
     runs-on: ubuntu-latest
+    environment: production
     steps:
+      - name: Confirm manual deploy
+        run: |
+          echo "Manual deploy to Vercel triggered."
+          if [ -n "${{ github.event.inputs.reason }}" ]; then
+            echo "Reason: ${{ github.event.inputs.reason }}"
+          fi
       - name: Call Vercel Deploy Hook
         run: |
           if [ -z "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}" ]; then
