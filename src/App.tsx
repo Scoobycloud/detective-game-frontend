@@ -29,6 +29,10 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [clues, setClues] = useState<Array<{ text: string; type?: string; source?: string; timestamp?: string }>>([]);
+  const [showProfile, setShowProfile] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
+  const [recordText, setRecordText] = useState('');
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -499,6 +503,24 @@ function App() {
                       setShakeDetective(char);
                       setTimeout(() => setShakeDetective(''), 400);
                     }}
+                    onDoubleClick={async () => {
+                      setShowProfile(true);
+                      setProfileLoading(true);
+                      setRecordText('');
+                      try {
+                        const res = await fetch(`${API_URL}/characters/${encodeURIComponent(char)}/profile`);
+                        const data = await res.json();
+                        if (!data || data.error) {
+                          setProfile({ name: char, dob: 'Unknown', address: 'Unknown', image_url: '', record: '' });
+                        } else {
+                          setProfile(data);
+                        }
+                      } catch {
+                        setProfile({ name: char, dob: 'Unknown', address: 'Unknown', image_url: '', record: '' });
+                      } finally {
+                        setProfileLoading(false);
+                      }
+                    }}
                     style={{
                       backgroundColor: '#111827',
                       border: `2px solid ${isSelected ? '#fbbf24' : '#374151'}`,
@@ -580,6 +602,60 @@ function App() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Police Profile Modal */}
+        {showProfile && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }}>
+            <div style={{ width: '100%', maxWidth: '42rem', backgroundColor: '#0b1220', color: 'white', borderRadius: '0.5rem', border: '1px solid #334155', boxShadow: '0 10px 25px rgba(0,0,0,0.6)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', borderBottom: '1px solid #1f2937' }}>
+                <div style={{ fontWeight: 700, color: '#34d399' }}>POLICE COMPUTER // SUBJECT PROFILE</div>
+                <button onClick={() => { setShowProfile(false); setProfile(null); setRecordText(''); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '10rem 1fr', gap: '1rem', padding: '1rem' }}>
+                <div style={{ backgroundColor: '#0f172a', border: '1px solid #334155', borderRadius: '0.375rem', display: 'flex', alignItems: 'center', justifyContent: 'center', height: '10rem', overflow: 'hidden' }}>
+                  {profile?.image_url ? (
+                    <img src={profile.image_url} alt={profile?.name || 'Profile'} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ color: '#64748b', fontSize: '0.875rem' }}>No Photo</div>
+                  )}
+                </div>
+                <div>
+                  <div style={{ display: 'grid', gap: '0.25rem', marginBottom: '0.5rem' }}>
+                    <div><span style={{ color: '#94a3b8' }}>Name:</span> {profile?.name || '—'}</div>
+                    <div><span style={{ color: '#94a3b8' }}>Current Address:</span> {profile?.address || '—'}</div>
+                    <div><span style={{ color: '#94a3b8' }}>DOB:</span> {profile?.dob || '—'}</div>
+                  </div>
+                  <button disabled={profileLoading} onClick={async () => {
+                    if (!profile?.record) {
+                      // fetch again just in case
+                      try {
+                        const res = await fetch(`${API_URL}/characters/${encodeURIComponent(profile?.name || '')}/profile`);
+                        const data = await res.json();
+                        if (data && !data.error) setProfile(data);
+                      } catch { }
+                    }
+                    // teleprompter effect
+                    const full = (profile?.record || 'No police record found.').toString();
+                    setRecordText('');
+                    let idx = 0;
+                    const timer = setInterval(() => {
+                      idx += 2;
+                      setRecordText(full.slice(0, idx));
+                      if (idx >= full.length) clearInterval(timer);
+                    }, 20);
+                  }} style={{ backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                    {profileLoading ? 'Loading…' : 'Get police record'}
+                  </button>
+                </div>
+              </div>
+              <div style={{ padding: '0 1rem 1rem 1rem' }}>
+                <div style={{ backgroundColor: '#00160a', border: '1px solid #14532d', minHeight: '8rem', borderRadius: '0.375rem', padding: '0.75rem', fontFamily: 'monospace', color: '#34d399', whiteSpace: 'pre-wrap' }}>
+                  {recordText}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
