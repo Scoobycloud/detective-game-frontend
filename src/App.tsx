@@ -387,7 +387,7 @@ function App() {
   if (gameState === 'lobby') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', background: "url('/lobbybckgrnd.png') center/cover no-repeat, #1f2937", borderRadius: '0.5rem', maxWidth: '28rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
             <div style={{ color: '#d1d5db', fontStyle: 'italic', textAlign: 'right' }}>
               Every clue tells a story.
@@ -406,7 +406,7 @@ function App() {
               <button onClick={handleSignOut} style={{ backgroundColor: '#374151', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign out</button>
             )}
           </div>
-          
+
 
           {!userEmail && (
             <div style={{ marginBottom: '1rem' }}>
@@ -481,7 +481,7 @@ function App() {
             </button>
           </div>
 
-          
+
 
           <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
             Backend: {API_URL}
