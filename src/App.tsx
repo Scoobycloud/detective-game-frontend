@@ -387,7 +387,7 @@ function App() {
   if (gameState === 'lobby') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', padding: '2rem', backgroundImage: "url('/lobbybckgrnd.png')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
+        <div style={{ textAlign: 'center', padding: '2rem', backgroundImage: "url('/lobbybckgrnd.png?v=2')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
             <div style={{ color: '#d1d5db', fontStyle: 'italic', textAlign: 'right' }}>
               Every clue tells a story.
