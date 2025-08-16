@@ -506,33 +506,16 @@ function App() {
     <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white' }}>
       {/* Header aligned with content container */}
       <div style={{ backgroundColor: '#1f2937', padding: '1rem 0' }}>
-        <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '0 1rem' }}>
+        <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            onClick={goToLobby}
+            style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
+          >
+            ← Back to Lobby
+          </button>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fbbf24' }}>
             🕵️ Detective Game - {role === 'detective' ? 'Detective Mode' : 'Character Controller'}
           </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.5rem' }}>
-            <div style={{ marginRight: 'auto', fontSize: '0.875rem', color: '#d1d5db' }}>
-              {userEmail ? `Signed in as ${userEmail}` : 'Not signed in'}
-            </div>
-            <button
-              onClick={goToLobby}
-              style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
-            >
-              ← Back to Lobby
-            </button>
-            <div style={{ fontSize: '0.875rem', color: connected ? '#10b981' : '#ef4444' }}>
-              {connected ? '🟢 Connected' : '🔴 Disconnected'}
-            </div>
-            <button
-              onClick={() => setShowHelp(true)}
-              style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
-            >❓ How to Play</button>
-            {userEmail ? (
-              <button onClick={handleSignOut} style={{ fontSize: '0.875rem', backgroundColor: '#374151', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>Sign out</button>
-            ) : (
-              <button onClick={handleSignIn} disabled={authBusy} style={{ fontSize: '0.875rem', backgroundColor: authBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}>{authBusy ? 'Signing in…' : 'Sign in'}</button>
-            )}
-          </div>
         </div>
       </div>
 
