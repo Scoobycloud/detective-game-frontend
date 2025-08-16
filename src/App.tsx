@@ -379,10 +379,10 @@ function App() {
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <button
               onClick={() => setShowHelp(true)}
-              style={{ backgroundColor: 'transparent', color: '#F5C542', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: '1px solid #F5C542', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}
+              style={{ backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}
             >❓ How to Play</button>
             {userEmail && (
-              <button onClick={handleSignOut} style={{ backgroundColor: '#374151', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign out</button>
+              <button onClick={handleSignOut} style={{ backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>Sign out</button>
             )}
           </div>
 
@@ -393,10 +393,10 @@ function App() {
                 <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: '0.5rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.375rem' }} />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: '0.5rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.375rem' }} />
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={async () => { try { setAuthBusy(true); await signInWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Email sign-in failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, background: 'transparent', color: '#F5C542', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid #F5C542', cursor: 'pointer', letterSpacing: '0.02em' }}>Sign in</button>
-                  <button onClick={async () => { try { setAuthBusy(true); await createUserWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Sign-up failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: '#2A2A2A', color: '#F5C542', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid #F5C542', cursor: 'pointer', letterSpacing: '0.02em' }}>Sign up</button>
+                  <button onClick={async () => { try { setAuthBusy(true); await signInWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Email sign-in failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}>Sign in</button>
+                  <button onClick={async () => { try { setAuthBusy(true); await createUserWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Sign-up failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}>Sign up</button>
                 </div>
-                <button onClick={handleSignIn} disabled={authBusy} style={{ width: '100%', backgroundColor: '#F5C542', color: '#0B0B0B', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>
+                <button onClick={handleSignIn} disabled={authBusy} style={{ width: '100%', backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>
                   {authBusy ? 'Signing in…' : 'Continue with Google'}
                 </button>
               </div>
@@ -417,12 +417,12 @@ function App() {
                   setMyRoom(roomCode.trim());
                   addMessage(`🔑 Set room: ${roomCode.trim()}`);
                 }}
-                style={{ backgroundColor: '#1A2530', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.25rem', border: '1px solid #2F3F50', cursor: 'pointer', letterSpacing: '0.02em' }}
+                style={{ backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
               >Join</button>
             </div>
             <button
               onClick={createRoom}
-              style={{ marginTop: '0.5rem', width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.5rem 1rem', borderRadius: '0.25rem', border: '1px solid #F5C542', cursor: 'pointer', letterSpacing: '0.02em' }}
+              style={{ marginTop: '0.5rem', width: '100%', backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
             >Create New Room</button>
             {myRoom && (
               <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#d1d5db' }}>Selected room: {myRoom}</div>
@@ -432,7 +432,7 @@ function App() {
           <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
             <button
               onClick={joinAsDetective}
-              style={{ width: '100%', backgroundColor: '#F5C542', color: '#0B0B0B', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: '1px solid #C7961E', cursor: 'pointer', marginBottom: '1rem', letterSpacing: '0.02em' }}
+              style={{ width: '100%', backgroundColor: '#1C1A12', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, border: '1px solid #C7961E', cursor: 'pointer', marginBottom: '1rem', letterSpacing: '0.02em' }}
             >
               🕵️ Play as Detective
             </button>
