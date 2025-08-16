@@ -3,6 +3,7 @@ import io from 'socket.io-client';
 import './App.css';
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult } from './firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import logo from './logo.svg';
 
 // Real-time Detective Game Interface with Socket.IO
 function App() {
@@ -388,7 +389,12 @@ function App() {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
-          <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#fbbf24' }}>🕵️ Detective Game</h1>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
+            <img src={logo} alt="Detective Game" style={{ height: '56px' }} />
+          </div>
+          <div style={{ textAlign: 'center', marginBottom: '1.25rem', color: '#d1d5db', fontStyle: 'italic' }}>
+            Every clue tells a story. Every story hides a lie.
+          </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <button
               onClick={() => setShowHelp(true)}
