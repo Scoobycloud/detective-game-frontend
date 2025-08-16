@@ -389,10 +389,15 @@ function App() {
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
           <h1 style={{ fontSize: '2.25rem', fontWeight: 'bold', marginBottom: '1.5rem', color: '#fbbf24' }}>🕵️ Detective Game</h1>
-          <button
-            onClick={() => setShowHelp(true)}
-            style={{ backgroundColor: '#4b5563', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', marginBottom: '1rem', fontWeight: 600 }}
-          >❓ How to Play</button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button
+              onClick={() => setShowHelp(true)}
+              style={{ backgroundColor: '#4b5563', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}
+            >❓ How to Play</button>
+            {userEmail && (
+              <button onClick={handleSignOut} style={{ backgroundColor: '#374151', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign out</button>
+            )}
+          </div>
           <p style={{ marginBottom: '2rem', color: '#d1d5db' }}>Real-time multiplayer mystery game</p>
 
           {!userEmail && (
