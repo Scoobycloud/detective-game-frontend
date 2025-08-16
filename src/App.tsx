@@ -406,7 +406,7 @@ function App() {
               <button onClick={handleSignOut} style={{ backgroundColor: '#374151', color: 'white', padding: '0.375rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Sign out</button>
             )}
           </div>
-          <p style={{ marginBottom: '2rem', color: '#d1d5db' }}>Real-time multiplayer mystery game</p>
+          
 
           {!userEmail && (
             <div style={{ marginBottom: '1rem' }}>
@@ -481,10 +481,7 @@ function App() {
             </button>
           </div>
 
-          <div style={{ marginTop: '2rem', padding: '1rem', backgroundColor: '#374151', borderRadius: '0.25rem', fontSize: '0.875rem' }}>
-            <p><strong>Detective:</strong> Ask questions to solve the mystery</p>
-            <p><strong>Character Controller:</strong> Answer as your chosen character</p>
-          </div>
+          
 
           <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
             Backend: {API_URL}
