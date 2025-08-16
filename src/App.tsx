@@ -388,14 +388,8 @@ function App() {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '2rem', backgroundImage: "url('/lobbybckgrnd.png?v=3')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#1f2937', borderRadius: '0.5rem', maxWidth: '28rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
-            <div style={{ color: '#d1d5db', fontStyle: 'italic', textAlign: 'right' }}>
-              Every clue tells a story.
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
             <img src="/logo.png" alt="Detective Game" style={{ height: '180px', width: 'auto' }} />
-            <div style={{ color: '#d1d5db', fontStyle: 'italic', textAlign: 'left' }}>
-              Every story hides a lie.
-            </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
             <button
