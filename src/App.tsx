@@ -250,22 +250,7 @@ function App() {
     }
   };
 
-  const quickMatch = (asRole: 'detective' | 'murderer') => {
-    const temp = io(API_URL, { transports: ['websocket'] });
-    temp.on('connect', () => {
-      temp.emit('queue_for_role', { role: asRole });
-      addMessage(`⏳ Queued for matchmaking as ${asRole}...`);
-    });
-    temp.on('matched', ({ room }: { room: string }) => {
-      setMyRoom(room);
-      setRole(asRole);
-      setGameState('playing');
-      addMessage(`✅ Matched! Room: ${room}`);
-      temp.disconnect();
-    });
-    temp.on('error', ({ msg }: { msg: string }) => addMessage(`❌ Error: ${msg}`));
-    temp.on('disconnect', () => temp.close());
-  };
+  // quickMatch removed per UI simplification
 
   const lockCharacter = () => {
     if (!controlledCharacter || !socketRef.current) return;
@@ -460,25 +445,12 @@ function App() {
             </button>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <button
-              onClick={() => quickMatch('detective')}
-              style={{ width: '100%', backgroundColor: '#1d4ed8', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 600 as any, border: 'none', cursor: 'pointer', marginBottom: '0.5rem' }}
-            >
-              🔀 Quick Match as Detective
-            </button>
-            <button
-              onClick={() => quickMatch('murderer')}
-              style={{ width: '100%', backgroundColor: '#b91c1c', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.5rem', fontWeight: 600 as any, border: 'none', cursor: 'pointer' }}
-            >
-              🔀 Quick Match as Character
-            </button>
-          </div>
+          
 
 
 
           <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-            Backend: {API_URL}
+            {userEmail ? `Signed in as ${userEmail}` : 'Not signed in'}
           </div>
         </div>
         {showHelp && (
