@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import io from 'socket.io-client';
 import './App.css';
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult } from './firebase';
@@ -299,7 +299,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
-  const ensureMusicStarted = async () => {
+  const ensureMusicStarted = useCallback(async () => {
     try {
       if (gameState !== 'lobby') return;
       if (!musicOn) return;
@@ -318,7 +318,7 @@ function App() {
     } catch {
       // ignore autoplay errors; will retry on next user gesture
     }
-  };
+  }, [gameState, musicOn]);
 
   useEffect(() => {
     localStorage.setItem('musicOn', String(musicOn));
@@ -327,7 +327,7 @@ function App() {
     } else if (musicOn) {
       void ensureMusicStarted();
     }
-  }, [musicOn]);
+  }, [musicOn, ensureMusicStarted]);
 
   const playKeyClick = () => {
     try {
