@@ -373,18 +373,13 @@ function App() {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center', padding: '2rem', backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/lobbybckgrnd.png?v=3')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#0a0f16', borderRadius: '0.5rem', border: '1px solid #223041', maxWidth: '28rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
+            <span onClick={() => setShowHelp(true)} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600, letterSpacing: '0.02em' }}>❓ How to Play</span>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
             <img src="/logo.png" alt="Detective Game" style={{ height: '180px', width: 'auto', filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.6))' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-            <button
-              onClick={() => setShowHelp(true)}
-              style={{ backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}
-            >❓ How to Play</button>
-            {userEmail && (
-              <button onClick={handleSignOut} style={{ backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>Sign out</button>
-            )}
-          </div>
+          
 
 
           {!userEmail && (
@@ -449,8 +444,15 @@ function App() {
 
 
 
-          <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-            {userEmail ? `Signed in as ${userEmail}` : 'Not signed in'}
+          <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+            {userEmail ? (
+              <>
+                <span>Signed in as {userEmail}</span>
+                <span onClick={handleSignOut} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Sign out</span>
+              </>
+            ) : (
+              <span>Not signed in</span>
+            )}
           </div>
         </div>
         {showHelp && (
