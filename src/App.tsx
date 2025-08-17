@@ -35,6 +35,12 @@ function App() {
   const [recordText, setRecordText] = useState('');
   const audioCtxRef = useRef<any | null>(null);
   const recordTimerRef = useRef<any | null>(null);
+  const [musicOn, setMusicOn] = useState<boolean>(() => {
+    const v = localStorage.getItem('musicOn');
+    return v === null ? true : v === 'true';
+  });
+  const musicRef = useRef<HTMLAudioElement | null>(null);
+  const musicStartedRef = useRef<boolean>(false);
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -293,6 +299,36 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
+  const ensureMusicStarted = async () => {
+    try {
+      if (gameState !== 'lobby') return;
+      if (!musicOn) return;
+      if (musicStartedRef.current && musicRef.current) {
+        if (musicRef.current.paused) await musicRef.current.play().catch(() => {});
+        return;
+      }
+      if (!musicRef.current) {
+        const el = new Audio('/lobby.mp3');
+        el.loop = true;
+        el.volume = 0.2;
+        musicRef.current = el;
+      }
+      await musicRef.current!.play();
+      musicStartedRef.current = true;
+    } catch {
+      // ignore autoplay errors; will retry on next user gesture
+    }
+  };
+
+  useEffect(() => {
+    localStorage.setItem('musicOn', String(musicOn));
+    if (!musicOn && musicRef.current) {
+      musicRef.current.pause();
+    } else if (musicOn) {
+      void ensureMusicStarted();
+    }
+  }, [musicOn]);
+
   const playKeyClick = () => {
     try {
       const AC: any = (window as any).AudioContext || (window as any).webkitAudioContext;
@@ -372,9 +408,10 @@ function App() {
   if (gameState === 'lobby') {
     return (
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ textAlign: 'center', padding: '2rem', backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/lobbybckgrnd.png?v=3')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#0a0f16', borderRadius: '0.5rem', border: '1px solid #223041', maxWidth: '28rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.5rem' }}>
-            <span onClick={() => setShowHelp(true)} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600, letterSpacing: '0.02em' }}>❓ How to Play</span>
+        <div onClick={() => void ensureMusicStarted()} style={{ textAlign: 'center', padding: '2rem', backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/lobbybckgrnd.png?v=3')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#0a0f16', borderRadius: '0.5rem', border: '1px solid #223041', maxWidth: '28rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span onClick={(e) => { e.stopPropagation(); setMusicOn((v) => !v); }} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600, letterSpacing: '0.02em' }}>Music: {musicOn ? 'On' : 'Off'}</span>
+            <span onClick={(e) => { e.stopPropagation(); setShowHelp(true); void ensureMusicStarted(); }} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600, letterSpacing: '0.02em' }}>❓ How to Play</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
             <img src="/logo.png" alt="Detective Game" style={{ height: '180px', width: 'auto', filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.6))' }} />
@@ -388,10 +425,10 @@ function App() {
                 <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" style={{ padding: '0.5rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.375rem' }} />
                 <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" style={{ padding: '0.5rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.375rem' }} />
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={async () => { try { setAuthBusy(true); await signInWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Email sign-in failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}>Sign in</button>
-                  <button onClick={async () => { try { setAuthBusy(true); await createUserWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Sign-up failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}>Sign up</button>
+                  <button onClick={async () => { try { setAuthBusy(true); await signInWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Email sign-in failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }} onClickCapture={() => void ensureMusicStarted()}>Sign in</button>
+                  <button onClick={async () => { try { setAuthBusy(true); await createUserWithEmailAndPassword(auth, email, password); } catch (e: any) { addMessage(`❌ Sign-up failed: ${e?.message || e}`) } finally { setAuthBusy(false); } }} disabled={authBusy} style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }} onClickCapture={() => void ensureMusicStarted()}>Sign up</button>
                 </div>
-                <button onClick={handleSignIn} disabled={authBusy} style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>
+                <button onClick={(e) => { e.stopPropagation(); void ensureMusicStarted(); void handleSignIn(); }} disabled={authBusy} style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>
                   {authBusy ? 'Signing in…' : 'Continue with Google'}
                 </button>
               </div>
@@ -412,12 +449,12 @@ function App() {
                   setMyRoom(roomCode.trim());
                   addMessage(`🔑 Set room: ${roomCode.trim()}`);
                 }}
-                style={{ backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
+                style={{ backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }} onClickCapture={() => void ensureMusicStarted()}
               >Join</button>
             </div>
             <button
               onClick={createRoom}
-              style={{ marginTop: '0.5rem', width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
+              style={{ marginTop: '0.5rem', width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }} onClickCapture={() => void ensureMusicStarted()}
             >Create New Room</button>
             {myRoom && (
               <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#d1d5db' }}>Selected room: {myRoom}</div>
@@ -426,14 +463,14 @@ function App() {
 
           <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
             <button
-              onClick={joinAsDetective}
+              onClick={(e) => { e.stopPropagation(); void ensureMusicStarted(); joinAsDetective(); }}
               style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: 600, border: '1px solid #C7961E', cursor: 'pointer', marginBottom: '1rem', letterSpacing: '0.02em' }}
             >
               🕵️ Play as Detective
             </button>
 
             <button
-              onClick={joinAsMurderer}
+              onClick={(e) => { e.stopPropagation(); void ensureMusicStarted(); joinAsMurderer(); }}
               style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em' }}
             >
               🎭 Control a Character
