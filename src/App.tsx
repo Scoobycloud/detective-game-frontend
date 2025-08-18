@@ -32,6 +32,7 @@ function App() {
   const [evidence, setEvidence] = useState<Array<{ id: string; title: string; type: string; location?: string | null; is_discovered?: boolean; discovered_at?: string | null; notes?: string | null; created_at?: string }>>([]);
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
+  const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
   const [showProfile, setShowProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
@@ -326,6 +327,16 @@ function App() {
     } catch { }
   };
 
+  const fetchCredibility = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/credibility`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data) setCredibility({ counts: data.counts || [], personality: data.personality || [] });
+    } catch { }
+  };
+
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
     try {
@@ -354,6 +365,7 @@ function App() {
     void fetchEvidence();
     void fetchTimeline();
     void fetchAlibis();
+    void fetchCredibility();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
@@ -812,7 +824,10 @@ function App() {
           <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧭 Alibis</h3>
-              <button onClick={() => void fetchAlibis()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => void fetchCredibility()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Credibility</button>
+                <button onClick={() => void fetchAlibis()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+              </div>
             </div>
             {alibis.length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No alibis recorded yet.</div>
@@ -830,6 +845,18 @@ function App() {
                     <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{a.account}</div>
                   </div>
                 ))}
+              </div>
+            )}
+            {credibility.counts.length > 0 && (
+              <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                <div style={{ marginBottom: '0.25rem' }}>Contradictions detected:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {credibility.counts.map((c, i) => (
+                    <span key={i} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '9999px', padding: '0.25rem 0.5rem' }}>
+                      {c.character}: {c.contradictions}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </div>
