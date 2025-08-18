@@ -29,6 +29,8 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [clues, setClues] = useState<Array<{ text: string; type?: string; source?: string; timestamp?: string }>>([]);
+  const [evidence, setEvidence] = useState<Array<{ id: string; title: string; type: string; location?: string | null; is_discovered?: boolean; discovered_at?: string | null; notes?: string | null; created_at?: string }>>([]);
+  const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [showProfile, setShowProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
@@ -293,9 +295,31 @@ function App() {
     } catch { }
   };
 
+  const fetchEvidence = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/evidence`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setEvidence(data);
+    } catch { }
+  };
+
+  const fetchTimeline = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/timeline`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setTimeline(data);
+    } catch { }
+  };
+
   useEffect(() => {
     if (!myRoom) return;
     void fetchClues();
+    void fetchEvidence();
+    void fetchTimeline();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
@@ -304,7 +328,7 @@ function App() {
       if (gameState !== 'lobby') return;
       if (!musicOn) return;
       if (musicStartedRef.current && musicRef.current) {
-        if (musicRef.current.paused) await musicRef.current.play().catch(() => {});
+        if (musicRef.current.paused) await musicRef.current.play().catch(() => { });
         return;
       }
       if (!musicRef.current) {
@@ -416,7 +440,7 @@ function App() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem' }}>
             <img src="/logo.png" alt="Detective Game" style={{ height: '180px', width: 'auto', filter: 'drop-shadow(0 10px 24px rgba(0,0,0,0.6))' }} />
           </div>
-          
+
 
 
           {!userEmail && (
@@ -657,6 +681,69 @@ function App() {
                     {c.timestamp && (
                       <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>{new Date(c.timestamp).toLocaleString()}</div>
                     )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Evidence Panel */}
+        {myRoom && (
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧾 Evidence</h3>
+              <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+            </div>
+            {evidence.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {evidence.map((e) => (
+                  <div key={e.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{e.title}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{e.type}</span>
+                    </div>
+                    {e.location && (
+                      <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Location: {e.location}</div>
+                    )}
+                    {typeof e.is_discovered === 'boolean' && (
+                      <div style={{ fontSize: '0.75rem', color: e.is_discovered ? '#10b981' : '#9ca3af' }}>
+                        {e.is_discovered ? 'Discovered' : 'Undiscovered'}
+                      </div>
+                    )}
+                    {e.notes && (
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Timeline Panel */}
+        {myRoom && (
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🕰️ Timeline</h3>
+              <button onClick={() => void fetchTimeline()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+            </div>
+            {timeline.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No timeline events yet.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {timeline.map((t) => (
+                  <div key={t.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem', display: 'grid', gridTemplateColumns: '6rem 1fr', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#d1d5db' }}>
+                      <div style={{ fontWeight: 600 }}>{t.tstamp}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{t.phase}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{t.label}</div>
+                      {t.details && <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{t.details}</div>}
+                    </div>
                   </div>
                 ))}
               </div>
