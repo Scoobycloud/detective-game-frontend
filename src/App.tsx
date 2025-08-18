@@ -315,6 +315,28 @@ function App() {
     } catch { }
   };
 
+  const searchLocation = async (loc: string) => {
+    if (!myRoom || !loc.trim()) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/search`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ location: loc })
+      });
+      const data = await res.json();
+      if (data?.found) {
+        addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
+        void fetchEvidence();
+      } else if (data?.error) {
+        addMessage(`❌ Search error: ${data.error}`);
+      } else {
+        addMessage('🔎 No evidence found there.');
+      }
+    } catch (e: any) {
+      addMessage(`❌ Search failed: ${e?.message || e}`);
+    }
+  };
+
   useEffect(() => {
     if (!myRoom) return;
     void fetchClues();
@@ -656,6 +678,28 @@ function App() {
               >
                 Ask
               </button>
+            </div>
+
+            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                placeholder="Search a location (e.g., Study fireplace)"
+                onKeyDown={(e: any) => {
+                  if (e.key === 'Enter') {
+                    const v = String(e.currentTarget.value || '').trim();
+                    if (v) { searchLocation(v); e.currentTarget.value = ''; }
+                  }
+                }}
+                style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
+              />
+              <button
+                onClick={() => {
+                  const el = (document.activeElement as HTMLInputElement);
+                  const v = (el && 'value' in el) ? String((el as any).value || '').trim() : '';
+                  if (v) { searchLocation(v); (el as any).value = ''; }
+                }}
+                style={{ backgroundColor: '#1A2530', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', border: '1px solid #2F3F50', cursor: 'pointer' }}
+              >Search</button>
             </div>
           </div>
         )}
