@@ -31,6 +31,7 @@ function App() {
   const [clues, setClues] = useState<Array<{ text: string; type?: string; source?: string; timestamp?: string }>>([]);
   const [evidence, setEvidence] = useState<Array<{ id: string; title: string; type: string; location?: string | null; is_discovered?: boolean; discovered_at?: string | null; notes?: string | null; created_at?: string }>>([]);
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
+  const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
   const [showProfile, setShowProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
@@ -315,6 +316,16 @@ function App() {
     } catch { }
   };
 
+  const fetchAlibis = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/alibis`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setAlibis(data);
+    } catch { }
+  };
+
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
     try {
@@ -342,6 +353,7 @@ function App() {
     void fetchClues();
     void fetchEvidence();
     void fetchTimeline();
+    void fetchAlibis();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
@@ -788,6 +800,34 @@ function App() {
                       <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{t.label}</div>
                       {t.details && <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{t.details}</div>}
                     </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Alibis Panel */}
+        {myRoom && (
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧭 Alibis</h3>
+              <button onClick={() => void fetchAlibis()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+            </div>
+            {alibis.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No alibis recorded yet.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {alibis.map((a) => (
+                  <div key={a.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{a.character}</span>
+                      {typeof a.credibility_score === 'number' && (
+                        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>cred: {a.credibility_score.toFixed(1)}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Time: {a.timeframe}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{a.account}</div>
                   </div>
                 ))}
               </div>
