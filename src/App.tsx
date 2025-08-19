@@ -140,14 +140,14 @@ function App() {
     addMessage('Choose your role to begin...');
   }, []);
 
-  const loadRooms = async () => {
+  const loadRooms = useCallback(async () => {
     try {
       const res = await fetch(`${API_URL}/rooms`);
       const data = await res.json();
       if (Array.isArray(data)) setRooms(data);
     } catch { }
-  };
-  useEffect(() => { void loadRooms(); }, [API_URL]);
+  }, [API_URL]);
+  useEffect(() => { void loadRooms(); }, [loadRooms]);
 
   const validateRoomName = async (name: string) => {
     if (!name || name.length < 4 || /[^a-zA-Z0-9]/.test(name)) { setNameValid(false); return; }
@@ -266,27 +266,7 @@ function App() {
     addMessage(`🎭 You are controlling a character in room ${myRoom}!`);
   };
 
-  const createRoom = () => {
-    if (socketRef.current) {
-      socketRef.current.emit('create_room', {});
-      socketRef.current.on('room_created', ({ room }: { room: string }) => {
-        setMyRoom(room);
-        addMessage(`🏠 Room created: ${room}`);
-      });
-    } else {
-      // Create a transient socket just to create a room, then close
-      const temp = io(API_URL, { transports: ['websocket'] });
-      temp.on('connect', () => {
-        temp.emit('create_room', {});
-      });
-      temp.on('room_created', ({ room }: { room: string }) => {
-        setMyRoom(room);
-        addMessage(`🏠 Room created: ${room}`);
-        temp.disconnect();
-      });
-      temp.on('disconnect', () => temp.close());
-    }
-  };
+  // createRoom is no longer used in the simplified UI
 
   // quickMatch removed per UI simplification
 
