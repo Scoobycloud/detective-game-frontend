@@ -10,6 +10,11 @@ function App() {
   const [gameState, setGameState] = useState<'lobby' | 'playing'>('lobby');
   const [messages, setMessages] = useState<string[]>([]);
   const [roomCode, setRoomCode] = useState('');
+  const [rooms, setRooms] = useState<Array<{ code: string; status?: string; name?: string }>>([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [newRoomName, setNewRoomName] = useState('');
+  const [nameBusy, setNameBusy] = useState(false);
+  const [nameValid, setNameValid] = useState<boolean | null>(null);
   const [myRoom, setMyRoom] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
   const [question, setQuestion] = useState('');
@@ -134,6 +139,29 @@ function App() {
     addMessage('🎮 Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
   }, []);
+
+  const loadRooms = async () => {
+    try {
+      const res = await fetch(`${API_URL}/rooms`);
+      const data = await res.json();
+      if (Array.isArray(data)) setRooms(data);
+    } catch { }
+  };
+  useEffect(() => { void loadRooms(); }, [API_URL]);
+
+  const validateRoomName = async (name: string) => {
+    if (!name || name.length < 4 || /[^a-zA-Z0-9]/.test(name)) { setNameValid(false); return; }
+    setNameBusy(true);
+    try {
+      const res = await fetch(`${API_URL}/rooms/name_exists?name=${encodeURIComponent(name)}`);
+      const data = await res.json();
+      setNameValid(!data?.exists);
+    } catch {
+      setNameValid(null);
+    } finally {
+      setNameBusy(false);
+    }
+  };
 
   useEffect(() => {
     // Initialize Socket.IO connection
@@ -506,26 +534,22 @@ function App() {
           )}
 
           <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
+            <div style={{ display: 'grid', gap: '0.5rem' }}>
+              <select
                 value={roomCode}
-                onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
-                placeholder="Enter room code"
-                style={{ flex: 1, padding: '0.5rem', backgroundColor: '#0E1622', borderRadius: '0.25rem', border: '1px solid #2A3A4A', color: '#E5E7EB' }}
-              />
+                onChange={(e) => { setRoomCode(e.target.value); setMyRoom(e.target.value || null); if (e.target.value) addMessage(`🔑 Selected room: ${e.target.value}`); }}
+                style={{ width: '100%', padding: '0.5rem', backgroundColor: '#0E1622', border: '1px solid #2A3A4A', borderRadius: '0.25rem', color: '#E5E7EB' }}
+              >
+                <option value="">Select a room…</option>
+                {rooms.map((r) => (
+                  <option key={r.code} value={r.code}>{r.name ? `${r.name} (${r.code})` : r.code}</option>
+                ))}
+              </select>
               <button
-                onClick={() => {
-                  if (!roomCode.trim()) return;
-                  setMyRoom(roomCode.trim());
-                  addMessage(`🔑 Set room: ${roomCode.trim()}`);
-                }}
-                style={{ backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }} onClickCapture={() => void ensureMusicStarted()}
-              >Join</button>
+                onClick={() => { setShowCreate(true); void ensureMusicStarted(); }}
+                style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
+              >Create New Room</button>
             </div>
-            <button
-              onClick={createRoom}
-              style={{ marginTop: '0.5rem', width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }} onClickCapture={() => void ensureMusicStarted()}
-            >Create New Room</button>
             {myRoom && (
               <div style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#d1d5db' }}>Selected room: {myRoom}</div>
             )}
@@ -579,6 +603,49 @@ function App() {
                   <li><strong>Character Controller:</strong> Lock a character. When asked, type and send your response.</li>
                   <li><strong>Tips:</strong> If no human reply, AI will answer. Use Back to Lobby to restart.</li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showCreate && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 60 }}>
+            <div style={{ width: '100%', maxWidth: '28rem', backgroundColor: '#0b1220', color: 'white', borderRadius: '0.5rem', border: '1px solid #334155', padding: '1rem' }}>
+              <div style={{ fontWeight: 700, marginBottom: '0.75rem' }}>Create Room</div>
+              <div style={{ display: 'grid', gap: '0.5rem' }}>
+                <input value={newRoomName} onChange={(e) => { const v = e.target.value.replace(/[^a-zA-Z0-9]/g, ''); setNewRoomName(v); void validateRoomName(v); }} placeholder="Room Name (letters/numbers, 4+)" style={{ padding: '0.5rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.375rem' }} />
+                <div style={{ fontSize: '0.75rem', color: nameValid === false ? '#f87171' : '#9ca3af' }}>
+                  {nameBusy ? 'Checking…' : nameValid === false ? 'Name invalid or already exists' : 'Only letters and numbers; 4+ chars'}
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                  <button onClick={() => { setShowCreate(false); setNewRoomName(''); setNameValid(null); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={async () => {
+                    if (!nameValid) return;
+                    // Get a new code
+                    let code = '';
+                    try {
+                      const r = await fetch(`${API_URL}/rooms/new_code`);
+                      const d = await r.json();
+                      code = d?.code || '';
+                    } catch {}
+                    // Create room with preferred code
+                    const temp = io(API_URL, { transports: ['websocket'] });
+                    temp.on('connect', () => { temp.emit('create_room', code ? { preferred_code: code } : {}); });
+                    temp.on('room_created', async ({ room }) => {
+                      setMyRoom(room);
+                      setRoomCode(room);
+                      addMessage(`🏠 Room created: ${room}`);
+                      // Set room name
+                      try { await fetch(`${API_URL}/rooms/${encodeURIComponent(room)}/name`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newRoomName }) }); } catch {}
+                      temp.disconnect();
+                      setShowCreate(false);
+                      setNewRoomName('');
+                      setNameValid(null);
+                      void loadRooms();
+                    });
+                    temp.on('disconnect', () => temp.close());
+                  }} disabled={!nameValid} style={{ backgroundColor: !nameValid ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: !nameValid ? 'not-allowed' : 'pointer' }}>OK</button>
+                </div>
               </div>
             </div>
           </div>
