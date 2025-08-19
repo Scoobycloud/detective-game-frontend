@@ -627,7 +627,7 @@ function App() {
                       const r = await fetch(`${API_URL}/rooms/new_code`);
                       const d = await r.json();
                       code = d?.code || '';
-                    } catch {}
+                    } catch { }
                     // Create room with preferred code
                     const temp = io(API_URL, { transports: ['websocket'] });
                     temp.on('connect', () => { temp.emit('create_room', code ? { preferred_code: code } : {}); });
@@ -636,7 +636,7 @@ function App() {
                       setRoomCode(room);
                       addMessage(`🏠 Room created: ${room}`);
                       // Set room name
-                      try { await fetch(`${API_URL}/rooms/${encodeURIComponent(room)}/name`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newRoomName }) }); } catch {}
+                      try { await fetch(`${API_URL}/rooms/${encodeURIComponent(room)}/name`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newRoomName }) }); } catch { }
                       temp.disconnect();
                       setShowCreate(false);
                       setNewRoomName('');
@@ -758,7 +758,11 @@ function App() {
                 type="text"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && askQuestion()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    askQuestion();
+                  }
+                }}
                 placeholder={selectedCharacter ? `Ask ${selectedCharacter}...` : 'Select a suspect, then ask your question...'}
                 style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
               />
