@@ -795,35 +795,7 @@ function App() {
           </div>
         )}
 
-        {/* Evidence/Timeline/Alibis panels moved to modals via buttons above */}
-
-        {/* Timeline Panel */}
-        {myRoom && (
-          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🕰️ Timeline</h3>
-              <button onClick={() => void fetchTimeline()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-            </div>
-            {timeline.length === 0 ? (
-              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No timeline events yet.</div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {timeline.map((t) => (
-                  <div key={t.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem', display: 'grid', gridTemplateColumns: '6rem 1fr', gap: '0.5rem' }}>
-                    <div style={{ fontSize: '0.875rem', color: '#d1d5db' }}>
-                      <div style={{ fontWeight: 600 }}>{t.tstamp}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{t.phase}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{t.label}</div>
-                      {t.details && <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{t.details}</div>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Evidence/Timeline/Alibis moved to modals via buttons above */}
 
         {/* Alibis moved to modal */}
 
