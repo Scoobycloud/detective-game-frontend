@@ -42,6 +42,10 @@ function App() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
   const [recordText, setRecordText] = useState('');
+  const [showCluesModal, setShowCluesModal] = useState(false);
+  const [showEvidenceModal, setShowEvidenceModal] = useState(false);
+  const [showTimelineModal, setShowTimelineModal] = useState(false);
+  const [showAlibisModal, setShowAlibisModal] = useState(false);
   const audioCtxRef = useRef<any | null>(null);
   const recordTimerRef = useRef<any | null>(null);
   const [musicOn, setMusicOn] = useState<boolean>(() => {
@@ -779,68 +783,19 @@ function App() {
           </div>
         )}
 
-        {/* Clues Panel */}
+        {/* Detective quick controls: open modals */}
         {myRoom && (
           <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧩 Clues</h3>
-              <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-start' }}>
+              <button onClick={() => { void fetchClues(); setShowCluesModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧩 Clues</button>
+              <button onClick={() => { void fetchEvidence(); setShowEvidenceModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧾 Evidence</button>
+              <button onClick={() => { void fetchTimeline(); setShowTimelineModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🕰️ Timeline</button>
+              <button onClick={() => { void fetchAlibis(); void fetchCredibility(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
             </div>
-            {clues.length === 0 ? (
-              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No clues yet. Ask questions to gather information.</div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {clues.map((c, idx) => (
-                  <div key={idx} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.75rem', color: '#d1d5db' }}>{c.source || 'Unknown'}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{c.type || 'FACT'}</span>
-                    </div>
-                    <div style={{ fontSize: '0.875rem' }}>{c.text}</div>
-                    {c.timestamp && (
-                      <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>{new Date(c.timestamp).toLocaleString()}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
         )}
 
-        {/* Evidence Panel */}
-        {myRoom && (
-          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧾 Evidence</h3>
-              <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-            </div>
-            {evidence.length === 0 ? (
-              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {evidence.map((e) => (
-                  <div key={e.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{e.title}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{e.type}</span>
-                    </div>
-                    {e.location && (
-                      <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Location: {e.location}</div>
-                    )}
-                    {typeof e.is_discovered === 'boolean' && (
-                      <div style={{ fontSize: '0.75rem', color: e.is_discovered ? '#10b981' : '#9ca3af' }}>
-                        {e.is_discovered ? 'Discovered' : 'Undiscovered'}
-                      </div>
-                    )}
-                    {e.notes && (
-                      <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {/* Evidence/Timeline/Alibis panels moved to modals via buttons above */}
 
         {/* Timeline Panel */}
         {myRoom && (
@@ -870,48 +825,7 @@ function App() {
           </div>
         )}
 
-        {/* Alibis Panel */}
-        {myRoom && (
-          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧭 Alibis</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => void fetchCredibility()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Credibility</button>
-                <button onClick={() => void fetchAlibis()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-              </div>
-            </div>
-            {alibis.length === 0 ? (
-              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No alibis recorded yet.</div>
-            ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {alibis.map((a) => (
-                  <div key={a.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{a.character}</span>
-                      {typeof a.credibility_score === 'number' && (
-                        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>cred: {a.credibility_score.toFixed(1)}</span>
-                      )}
-                    </div>
-                    <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Time: {a.timeframe}</div>
-                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{a.account}</div>
-                  </div>
-                ))}
-              </div>
-            )}
-            {credibility.counts.length > 0 && (
-              <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-                <div style={{ marginBottom: '0.25rem' }}>Contradictions detected:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {credibility.counts.map((c, i) => (
-                    <span key={i} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '9999px', padding: '0.25rem 0.5rem' }}>
-                      {c.character}: {c.contradictions}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Alibis moved to modal */}
 
         {/* Police Profile Modal */}
         {showProfile && (
@@ -1107,6 +1021,150 @@ function App() {
                 <li><strong>Tips:</strong> If no human reply, AI will answer. Use Back to Lobby to restart.</li>
               </ul>
             </div>
+          </div>
+        </div>
+      )}
+      {showAlibisModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧭 Alibis</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => { void fetchCredibility(); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Credibility</button>
+                <button onClick={() => void fetchAlibis()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowAlibisModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+              </div>
+            </div>
+            {alibis.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No alibis recorded yet.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {alibis.map((a) => (
+                  <div key={a.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{a.character}</span>
+                      {typeof a.credibility_score === 'number' && (
+                        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>cred: {a.credibility_score.toFixed(1)}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Time: {a.timeframe}</div>
+                    <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{a.account}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {credibility.counts.length > 0 && (
+              <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#9ca3af' }}>
+                <div style={{ marginBottom: '0.25rem' }}>Contradictions detected:</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {credibility.counts.map((c, i) => (
+                    <span key={i} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '9999px', padding: '0.25rem 0.5rem' }}>
+                      {c.character}: {c.contradictions}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {showTimelineModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🕰️ Timeline</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => void fetchTimeline()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowTimelineModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+              </div>
+            </div>
+            {timeline.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No timeline events yet.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {timeline.map((t) => (
+                  <div key={t.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem', display: 'grid', gridTemplateColumns: '6rem 1fr', gap: '0.5rem' }}>
+                    <div style={{ fontSize: '0.875rem', color: '#d1d5db' }}>
+                      <div style={{ fontWeight: 600 }}>{t.tstamp}</div>
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{t.phase}</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{t.label}</div>
+                      {t.details && <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{t.details}</div>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {showEvidenceModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧾 Evidence</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+              </div>
+            </div>
+            {evidence.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {evidence.map((e) => (
+                  <div key={e.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{e.title}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{e.type}</span>
+                    </div>
+                    {e.location && (
+                      <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Location: {e.location}</div>
+                    )}
+                    {typeof e.is_discovered === 'boolean' && (
+                      <div style={{ fontSize: '0.75rem', color: e.is_discovered ? '#10b981' : '#9ca3af' }}>
+                        {e.is_discovered ? 'Discovered' : 'Undiscovered'}
+                      </div>
+                    )}
+                    {e.notes && (
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      {showCluesModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧩 Clues</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowCluesModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+              </div>
+            </div>
+            {clues.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No clues yet. Ask questions to gather information.</div>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
+                {clues.map((c, idx) => (
+                  <div key={idx} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#d1d5db' }}>{c.source || 'Unknown'}</span>
+                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{c.type || 'FACT'}</span>
+                    </div>
+                    <div style={{ fontSize: '0.875rem' }}>{c.text}</div>
+                    {c.timestamp && (
+                      <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>{new Date(c.timestamp).toLocaleString()}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
