@@ -34,7 +34,25 @@ function App() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [clues, setClues] = useState<Array<{ text: string; type?: string; source?: string; timestamp?: string }>>([]);
-  const [evidence, setEvidence] = useState<Array<{ id: string; title: string; type: string; location?: string | null; is_discovered?: boolean; discovered_at?: string | null; notes?: string | null; created_at?: string }>>([]);
+  const [evidence, setEvidence] = useState<Array<{
+    id: string;
+    title: string;
+    type: string;
+    location?: string | null;
+    is_discovered?: boolean;
+    discovered_at?: string | null;
+    notes?: string | null;
+    created_at?: string;
+    // Optional media fields (backend may provide different names)
+    thumbnail_url?: string | null;
+    thumb_url?: string | null;
+    thumbnail?: string | null;
+    thumb_path?: string | null;
+    media_url?: string | null;
+    url?: string | null;
+    file_url?: string | null;
+    media_path?: string | null;
+  }>>([]);
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
   const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
@@ -46,6 +64,7 @@ function App() {
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
+  const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
   const audioCtxRef = useRef<any | null>(null);
   const recordTimerRef = useRef<any | null>(null);
   const [musicOn, setMusicOn] = useState<boolean>(() => {
@@ -996,6 +1015,22 @@ function App() {
           </div>
         </div>
       )}
+      {mediaPreview && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreview(null)}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', maxWidth: '90vw', maxHeight: '90vh' }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
+              <button onClick={() => setMediaPreview(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
+            </div>
+            <div style={{ width: '80vw', maxWidth: '960px', maxHeight: '75vh' }}>
+              {mediaPreview.kind === 'video' ? (
+                <video src={mediaPreview.src} style={{ width: '100%', height: '100%', objectFit: 'contain' }} controls autoPlay />
+              ) : (
+                <img src={mediaPreview.src} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       {showAlibisModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
@@ -1084,26 +1119,41 @@ function App() {
             {evidence.length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {evidence.map((e) => (
-                  <div key={e.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
-                      <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{e.title}</span>
-                      <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{e.type}</span>
-                    </div>
-                    {e.location && (
-                      <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Location: {e.location}</div>
-                    )}
-                    {typeof e.is_discovered === 'boolean' && (
-                      <div style={{ fontSize: '0.75rem', color: e.is_discovered ? '#10b981' : '#9ca3af' }}>
-                        {e.is_discovered ? 'Discovered' : 'Undiscovered'}
+              <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                {evidence.map((e) => {
+                  const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
+                  const full = e.media_url || e.file_url || e.url || e.media_path || thumb;
+                  const isVideo = typeof full === 'string' && /\.(mp4|webm|ogg)(\?|$)/i.test(full);
+                  return (
+                    <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
+                        <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '0.5rem' }}>{e.type}</span>
                       </div>
-                    )}
-                    {e.notes && (
-                      <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
-                    )}
-                  </div>
-                ))}
+                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: full ? 'pointer' : 'default' }}
+                        onClick={() => { if (full) setMediaPreview({ src: full, kind: isVideo ? 'video' : 'image' }); }}>
+                        {thumb ? (
+                          <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem' }}>
+                            No preview
+                          </div>
+                        )}
+                      </div>
+                      {e.location && (
+                        <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Location: {e.location}</div>
+                      )}
+                      {typeof e.is_discovered === 'boolean' && (
+                        <div style={{ fontSize: '0.75rem', color: e.is_discovered ? '#10b981' : '#9ca3af' }}>
+                          {e.is_discovered ? 'Discovered' : 'Undiscovered'}
+                        </div>
+                      )}
+                      {e.notes && (
+                        <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
