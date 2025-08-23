@@ -1017,15 +1017,15 @@ function App() {
       )}
       {mediaPreview && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreview(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', maxWidth: '90vw', maxHeight: '90vh' }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', width: 'min(90vw, 960px)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
               <button onClick={() => setMediaPreview(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
             </div>
-            <div style={{ width: '80vw', maxWidth: '960px', maxHeight: '75vh' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {mediaPreview.kind === 'video' ? (
-                <video src={mediaPreview.src} style={{ width: '100%', height: '100%', objectFit: 'contain' }} controls autoPlay />
+                <video src={mediaPreview.src} style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} controls autoPlay />
               ) : (
-                <img src={mediaPreview.src} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={mediaPreview.src} alt="Preview" style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
               )}
             </div>
           </div>
