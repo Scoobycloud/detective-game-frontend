@@ -398,11 +398,13 @@ function App() {
       const data = await res.json();
       if (data?.found) {
         console.log('🔍 SEARCH: Evidence found, opening thumbnails modal');
+        console.log('🔍 SEARCH: Current mediaPreview state before opening modal:', mediaPreview);
         addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
         showToast('Evidence discovered!', 'ok');
         await fetchEvidence();
         setShowEvidenceModal(true);
         console.log('🔍 SEARCH: Evidence modal should now be open');
+        console.log('🔍 SEARCH: Current mediaPreview state after opening modal:', mediaPreview);
       } else if (data?.error) {
         addMessage(`❌ Search error: ${data.error}`);
         showToast('Search error', 'error');
@@ -1040,7 +1042,15 @@ function App() {
           </div>
         </div>
       )}
-      {mediaPreview && !showEvidenceModal && (() => { console.log('📺 VIEWER: Rendering media preview modal', { mediaPreview, showEvidenceModal }); return true; })() && (
+      {(() => {
+        const shouldShow = mediaPreview && !showEvidenceModal;
+        console.log('📺 VIEWER: Condition check', { mediaPreview, showEvidenceModal, shouldShow });
+        if (shouldShow) {
+          console.log('📺 VIEWER: Rendering media preview modal');
+          return true;
+        }
+        return false;
+      })() && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreviewDebug(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', width: 'min(90vw, 960px)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
