@@ -65,6 +65,8 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
+  const previewBlockUntilRef = useRef<number>(0);
+  const previewBlockUntilRef = useRef<number>(0);
   const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
@@ -377,7 +379,8 @@ function App() {
 
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
-    // Ensure we don't show the large media viewer from a prior click
+    // Block media preview briefly while we open the thumbnails modal
+    previewBlockUntilRef.current = Date.now() + 1500;
     setMediaPreview(null);
     try {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/search`, {
@@ -390,7 +393,6 @@ function App() {
         addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
         showToast('Evidence discovered!', 'ok');
         void fetchEvidence();
-        setMediaPreview(null);
         setShowEvidenceModal(true);
       } else if (data?.error) {
         addMessage(`❌ Search error: ${data.error}`);
@@ -1150,7 +1152,12 @@ function App() {
                         <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '0.5rem' }}>{e.type}</span>
                       </div>
                       <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: full ? 'pointer' : 'default' }}
-                        onClick={() => { if (full) setMediaPreview({ src: full, kind: isVideo ? 'video' : 'image' }); }}>
+                        onClick={() => {
+                          if (!full) return;
+                          // If we just opened the modal from search, ignore thumbnail clicks briefly
+                          if (Date.now() < previewBlockUntilRef.current) return;
+                          setMediaPreview({ src: full, kind: isVideo ? 'video' : 'image' });
+                        }}>
                         {thumb ? (
                           <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
