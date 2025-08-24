@@ -343,8 +343,11 @@ function App() {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/evidence`);
       if (!res.ok) return;
       const data = await res.json();
+      console.log('Fetched evidence data:', data);
       if (Array.isArray(data)) setEvidence(data);
-    } catch { }
+    } catch (error) {
+      console.error('Error fetching evidence:', error);
+    }
   };
 
   const fetchTimeline = async () => {
