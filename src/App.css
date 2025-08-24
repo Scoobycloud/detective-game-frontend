@@ -120,8 +120,20 @@ div[style*="backgroundImage"] {
   visibility: visible !important;
 }
 
-/* Block all img elements site-wide but allow videos */
-img {
+/* Allow img elements in evidence sections to load but remain non-interactive */
+div[style*="background-color: #0f172a"] img,
+div[style*="aspectRatio"] img {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  display: block !important;
+  visibility: visible !important;
+}
+
+/* Block all other img elements site-wide */
+img:not([alt*="thumbnail"]) {
   pointer-events: none !important;
   user-select: none !important;
   -webkit-user-select: none !important;

@@ -1123,11 +1123,18 @@ function App() {
               </div>
             </div>
             {evidence.filter(e => e.is_discovered).length === 0 ? (
-              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
+              <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>
+                No evidence recorded yet.
+                <br />
+                <small style={{ color: '#64748b' }}>
+                  Total evidence: {evidence.length}, Discovered: {evidence.filter(e => e.is_discovered).length}
+                </small>
+              </div>
             ) : (
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
                 {evidence.filter(e => e.is_discovered).map((e) => {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
+                  console.log('Rendering evidence:', e.title, 'thumbnail:', thumb);
 
                   return (
                     <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
@@ -1191,22 +1198,56 @@ function App() {
                                 ▶
                               </div>
                             </div>
-                          ) : (
-                            <div style={{
-                              width: '100%',
-                              height: '100%',
-                              backgroundImage: `url("${thumb}")`,
-                              backgroundSize: 'cover',
-                              backgroundPosition: 'center',
-                              backgroundRepeat: 'no-repeat',
-                              pointerEvents: 'none',
-                              userSelect: 'none',
-                              WebkitUserSelect: 'none',
-                              MozUserSelect: 'none',
-                              msUserSelect: 'none',
-                              borderRadius: '0.25rem'
-                            }} />
-                          )
+                                                  ) : (
+                          <div style={{
+                            position: 'relative',
+                            width: '100%',
+                            height: '100%',
+                            borderRadius: '0.25rem',
+                            overflow: 'hidden'
+                          }}>
+                            <img
+                              src={thumb}
+                              alt={`${e.title} thumbnail`}
+                              style={{
+                                width: '100%',
+                                height: '100%',
+                                objectFit: 'cover',
+                                pointerEvents: 'none',
+                                userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none',
+                                msUserSelect: 'none',
+                                borderRadius: '0.25rem'
+                              }}
+                              onError={(event) => {
+                                const img = event.currentTarget;
+                                img.style.display = 'none';
+                                const parent = img.parentElement;
+                                if (parent) {
+                                  parent.innerHTML = `
+                                    <div style="
+                                      width: 100%;
+                                      height: 100%;
+                                      background-color: #374151;
+                                      display: flex;
+                                      align-items: center;
+                                      justify-content: center;
+                                      color: #9ca3af;
+                                      font-size: 0.75rem;
+                                      text-align: center;
+                                      padding: 0.25rem;
+                                      border-radius: 0.25rem;
+                                    ">
+                                      Image failed to load<br/>
+                                      <small style="color: #64748b;">${thumb}</small>
+                                    </div>
+                                  `;
+                                }
+                              }}
+                            />
+                          </div>
+                        )
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem' }}>
                             No preview
