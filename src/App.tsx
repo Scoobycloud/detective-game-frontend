@@ -65,6 +65,13 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
+  const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
+  const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
+    setToast({ text, type });
+    window.clearTimeout((showToast as any)._t);
+    (showToast as any)._t = window.setTimeout(() => setToast(null), 2500);
+  };
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const audioCtxRef = useRef<any | null>(null);
   const recordTimerRef = useRef<any | null>(null);
   const [musicOn, setMusicOn] = useState<boolean>(() => {
@@ -379,12 +386,15 @@ function App() {
       const data = await res.json();
       if (data?.found) {
         addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
+        showToast('Evidence discovered!', 'ok');
         void fetchEvidence();
         setShowEvidenceModal(true);
       } else if (data?.error) {
         addMessage(`❌ Search error: ${data.error}`);
+        showToast('Search error', 'error');
       } else {
         addMessage('🔎 No evidence found there.');
+        showToast('No evidence found there.', 'error');
       }
     } catch (e: any) {
       addMessage(`❌ Search failed: ${e?.message || e}`);
@@ -783,6 +793,7 @@ function App() {
               <input
                 type="text"
                 placeholder="Search a location (e.g., Study fireplace)"
+                ref={searchInputRef}
                 onKeyDown={(e: any) => {
                   if (e.key === 'Enter') {
                     const v = String(e.currentTarget.value || '').trim();
@@ -793,9 +804,8 @@ function App() {
               />
               <button
                 onClick={() => {
-                  const el = (document.activeElement as HTMLInputElement);
-                  const v = (el && 'value' in el) ? String((el as any).value || '').trim() : '';
-                  if (v) { searchLocation(v); (el as any).value = ''; }
+                  const v = searchInputRef.current ? String(searchInputRef.current.value || '').trim() : '';
+                  if (v) { searchLocation(v); if (searchInputRef.current) searchInputRef.current.value = ''; }
                 }}
                 style={{ backgroundColor: '#1A2530', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', border: '1px solid #2F3F50', cursor: 'pointer' }}
               >Search</button>
@@ -1030,6 +1040,11 @@ function App() {
               )}
             </div>
           </div>
+        </div>
+      )}
+      {toast && (
+        <div style={{ position: 'fixed', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', backgroundColor: toast.type === 'ok' ? '#065f46' : '#7f1d1d', color: 'white', border: '1px solid rgba(255,255,255,0.15)', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', zIndex: 140 }}>
+          {toast.text}
         </div>
       )}
       {showAlibisModal && (
