@@ -1057,10 +1057,10 @@ function App() {
               <button onClick={() => setMediaPreviewDebug(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
             </div>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {mediaPreview.kind === 'video' ? (
+              {mediaPreview?.kind === 'video' ? (
                 <video src={mediaPreview.src} style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} controls autoPlay />
               ) : (
-                <img src={mediaPreview.src} alt="Preview" style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
+                <img src={mediaPreview?.src} alt="Preview" style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
               )}
             </div>
           </div>
