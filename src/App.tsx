@@ -380,6 +380,9 @@ function App() {
     if (!myRoom || !loc.trim()) return;
     console.log('🔍 SEARCH: Starting search, clearing mediaPreview');
     setMediaPreview(null);
+    // Block thumbnail clicks for 1.5 seconds after opening the modal
+    previewBlockUntilRef.current = Date.now() + 1500;
+    console.log('🔍 SEARCH: Set timing block until:', previewBlockUntilRef.current);
     try {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/search`, {
         method: 'POST',
@@ -1127,7 +1130,7 @@ function App() {
           </div>
         </div>
       )}
-      {showEvidenceModal && (
+      {showEvidenceModal && (() => { console.log('📋 MODAL: Evidence modal is rendering'); return true; })() && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -1145,6 +1148,7 @@ function App() {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
                   const full = e.media_url || e.file_url || e.url || e.media_path || thumb;
                   const isVideo = typeof full === 'string' && /\.(mp4|webm|ogg)(\?|$)/i.test(full);
+                  console.log('📋 EVIDENCE ITEM:', { title: e.title, thumb, full, isVideo });
                   return (
                     <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
@@ -1159,7 +1163,10 @@ function App() {
                             return;
                           }
                           // If we just opened the modal from search, ignore thumbnail clicks briefly
-                          if (Date.now() < previewBlockUntilRef.current) {
+                          const now = Date.now();
+                          const blockUntil = previewBlockUntilRef.current;
+                          console.log('🖼️ THUMBNAIL: Timing check', { now, blockUntil, isBlocked: now < blockUntil });
+                          if (now < blockUntil) {
                             console.log('🖼️ THUMBNAIL: Click blocked due to timing');
                             return;
                           }
