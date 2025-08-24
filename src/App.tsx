@@ -377,6 +377,8 @@ function App() {
 
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
+    // Ensure we don't show the large media viewer from a prior click
+    setMediaPreview(null);
     try {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/search`, {
         method: 'POST',
