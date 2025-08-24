@@ -380,6 +380,7 @@ function App() {
       if (data?.found) {
         addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
         void fetchEvidence();
+        setShowEvidenceModal(true);
       } else if (data?.error) {
         addMessage(`❌ Search error: ${data.error}`);
       } else {
@@ -1116,11 +1117,11 @@ function App() {
                 <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
               </div>
             </div>
-            {evidence.length === 0 ? (
+            {evidence.filter(e => e.is_discovered).length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
             ) : (
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                {evidence.map((e) => {
+                {evidence.filter(e => e.is_discovered).map((e) => {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
                   const full = e.media_url || e.file_url || e.url || e.media_path || thumb;
                   const isVideo = typeof full === 'string' && /\.(mp4|webm|ogg)(\?|$)/i.test(full);
