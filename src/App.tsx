@@ -1128,8 +1128,6 @@ function App() {
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
                 {evidence.filter(e => e.is_discovered).map((e) => {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
-                  const full = e.media_url || e.file_url || e.url || e.media_path || thumb;
-                  const isVideo = typeof full === 'string' && /\.(mp4|webm|ogg)(\?|$)/i.test(full);
 
                   return (
                     <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
