@@ -84,8 +84,20 @@ img[alt*="footage"] {
   -ms-user-select: none;
 }
 
-/* Nuclear option - disable ALL clicks and interactions in evidence sections */
-div[style*="background-color: #0f172a"] * {
+/* Allow video playback in evidence thumbnails while blocking other interactions */
+div[style*="background-color: #0f172a"] video {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+div[style*="aspectRatio"] video {
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+
+/* Block image-related interactions but allow videos */
+div[style*="background-color: #0f172a"] img,
+div[style*="background-color: #0f172a"] div[style*="backgroundImage"] {
   pointer-events: none !important;
   cursor: default !important;
   user-select: none !important;
@@ -94,7 +106,8 @@ div[style*="background-color: #0f172a"] * {
   -ms-user-select: none !important;
 }
 
-div[style*="aspectRatio"] * {
+div[style*="aspectRatio"] img,
+div[style*="aspectRatio"] div[style*="backgroundImage"] {
   pointer-events: none !important;
   cursor: default !important;
   user-select: none !important;
@@ -103,11 +116,17 @@ div[style*="aspectRatio"] * {
   -ms-user-select: none !important;
 }
 
-/* Block all possible image-related interactions */
+/* Block all img elements site-wide but allow videos */
 img {
   pointer-events: none !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
+}
+
+/* Allow video elements to be interactive */
+video {
+  pointer-events: auto !important;
+  cursor: pointer !important;
 }

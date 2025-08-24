@@ -1135,21 +1135,61 @@ function App() {
                         <span style={{ fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
                         <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '0.5rem' }}>{e.type}</span>
                       </div>
-                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: 'default', pointerEvents: 'none' }}>
+                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: 'pointer' }}>
                         {thumb ? (
-                          <div style={{
-                            width: '100%',
-                            height: '100%',
-                            backgroundImage: `url(${thumb})`,
-                            backgroundSize: 'cover',
-                            backgroundPosition: 'center',
-                            backgroundRepeat: 'no-repeat',
-                            pointerEvents: 'none',
-                            userSelect: 'none',
-                            WebkitUserSelect: 'none',
-                            MozUserSelect: 'none',
-                            msUserSelect: 'none'
-                          }} />
+                          e.type === 'video' ? (
+                            <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+                              <video
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  cursor: 'pointer'
+                                }}
+                                poster={thumb}
+                                onClick={(event) => {
+                                  const video = event.currentTarget;
+                                  if (video.paused) {
+                                    video.play();
+                                  } else {
+                                    video.pause();
+                                  }
+                                }}
+                                onMouseEnter={(event) => {
+                                  // Optional: could add hover effects here
+                                }}
+                              >
+                                <source src={e.media_url || ''} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
+                              <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                color: 'white',
+                                fontSize: '1.5rem',
+                                opacity: 0.8,
+                                pointerEvents: 'none'
+                              }}>
+                                ▶
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{
+                              width: '100%',
+                              height: '100%',
+                              backgroundImage: `url(${thumb})`,
+                              backgroundSize: 'cover',
+                              backgroundPosition: 'center',
+                              backgroundRepeat: 'no-repeat',
+                              pointerEvents: 'none',
+                              userSelect: 'none',
+                              WebkitUserSelect: 'none',
+                              MozUserSelect: 'none',
+                              msUserSelect: 'none'
+                            }} />
+                          )
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem' }}>
                             No preview
