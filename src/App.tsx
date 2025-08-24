@@ -1128,7 +1128,6 @@ function App() {
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
                 {evidence.filter(e => e.is_discovered).map((e) => {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
-                  console.log('Evidence:', e.title, 'Type:', e.type, 'Thumb URL:', thumb);
 
                   return (
                     <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
