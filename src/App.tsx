@@ -1128,6 +1128,7 @@ function App() {
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
                 {evidence.filter(e => e.is_discovered).map((e) => {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
+                  console.log('Evidence:', e.title, 'Type:', e.type, 'Thumb URL:', thumb);
 
                   return (
                     <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
@@ -1144,23 +1145,39 @@ function App() {
                                   width: '100%',
                                   height: '100%',
                                   objectFit: 'cover',
-                                  cursor: 'pointer'
+                                  cursor: 'pointer',
+                                  borderRadius: '0.25rem'
                                 }}
                                 poster={thumb}
+                                preload="metadata"
                                 onClick={(event) => {
                                   const video = event.currentTarget;
                                   if (video.paused) {
-                                    video.play();
+                                    video.play().catch(console.error);
                                   } else {
                                     video.pause();
                                   }
                                 }}
-                                onMouseEnter={(event) => {
-                                  // Optional: could add hover effects here
+                                onError={(event) => {
+                                  console.error('Video error:', event);
                                 }}
                               >
                                 <source src={e.media_url || ''} type="video/mp4" />
-                                Your browser does not support the video tag.
+                                <div style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  backgroundImage: `url("${thumb}")`,
+                                  backgroundSize: 'cover',
+                                  backgroundPosition: 'center',
+                                  backgroundRepeat: 'no-repeat',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  color: 'white',
+                                  fontSize: '0.875rem'
+                                }}>
+                                  Video not supported
+                                </div>
                               </video>
                               <div style={{
                                 position: 'absolute',
@@ -1179,7 +1196,7 @@ function App() {
                             <div style={{
                               width: '100%',
                               height: '100%',
-                              backgroundImage: `url(${thumb})`,
+                              backgroundImage: `url("${thumb}")`,
                               backgroundSize: 'cover',
                               backgroundPosition: 'center',
                               backgroundRepeat: 'no-repeat',
@@ -1187,7 +1204,8 @@ function App() {
                               userSelect: 'none',
                               WebkitUserSelect: 'none',
                               MozUserSelect: 'none',
-                              msUserSelect: 'none'
+                              msUserSelect: 'none',
+                              borderRadius: '0.25rem'
                             }} />
                           )
                         ) : (

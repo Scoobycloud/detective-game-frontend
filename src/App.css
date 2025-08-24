@@ -95,9 +95,8 @@ div[style*="aspectRatio"] video {
   cursor: pointer !important;
 }
 
-/* Block image-related interactions but allow videos */
-div[style*="background-color: #0f172a"] img,
-div[style*="background-color: #0f172a"] div[style*="backgroundImage"] {
+/* Only block img elements, allow div elements with backgroundImage to display */
+div[style*="background-color: #0f172a"] img {
   pointer-events: none !important;
   cursor: default !important;
   user-select: none !important;
@@ -106,14 +105,19 @@ div[style*="background-color: #0f172a"] div[style*="backgroundImage"] {
   -ms-user-select: none !important;
 }
 
-div[style*="aspectRatio"] img,
-div[style*="aspectRatio"] div[style*="backgroundImage"] {
+div[style*="aspectRatio"] img {
   pointer-events: none !important;
   cursor: default !important;
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
+}
+
+/* Ensure div elements with backgroundImage can display properly */
+div[style*="backgroundImage"] {
+  display: block !important;
+  visibility: visible !important;
 }
 
 /* Block all img elements site-wide but allow videos */
