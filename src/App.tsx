@@ -1030,22 +1030,7 @@ function App() {
           </div>
         </div>
       )}
-      {mediaPreview && !showEvidenceModal && Date.now() > previewBlockUntilRef.current && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreview(null)}>
-          <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', width: 'min(90vw, 960px)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
-              <button onClick={() => setMediaPreview(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
-            </div>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              {mediaPreview?.kind === 'video' ? (
-                <video src={mediaPreview.src} style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} controls autoPlay />
-              ) : (
-                <img src={mediaPreview?.src} alt="Preview" style={{ width: '100%', height: 'auto', maxHeight: '70vh', objectFit: 'contain' }} />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* DISABLED: Media viewer temporarily disabled to fix evidence search issue */}
       {toast && (
         <div style={{ position: 'fixed', bottom: '1rem', left: '50%', transform: 'translateX(-50%)', backgroundColor: toast.type === 'ok' ? '#065f46' : '#7f1d1d', color: 'white', border: '1px solid rgba(255,255,255,0.15)', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', zIndex: 140 }}>
           {toast.text}
@@ -1151,13 +1136,7 @@ function App() {
                         <span style={{ fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
                         <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '0.5rem' }}>{e.type}</span>
                       </div>
-                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: full ? 'pointer' : 'default' }}
-                        onClick={() => {
-                          if (!full) return;
-                          // Block clicks for 2 seconds after search
-                          if (Date.now() < previewBlockUntilRef.current) return;
-                          setMediaPreview({ src: full, kind: isVideo ? 'video' : 'image' });
-                        }}>
+                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: 'default' }}>
                         {thumb ? (
                           <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         ) : (
