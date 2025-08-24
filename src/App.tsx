@@ -66,7 +66,6 @@ function App() {
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
   const previewBlockUntilRef = useRef<number>(0);
-  const previewBlockUntilRef = useRef<number>(0);
   const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
