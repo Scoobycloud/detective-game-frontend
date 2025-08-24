@@ -65,6 +65,12 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
+  
+  // Debug wrapper for setMediaPreview to track all calls
+  const setMediaPreviewDebug = (value: { src: string; kind: 'image' | 'video' } | null) => {
+    console.log('🎬 MEDIA PREVIEW SET:', value, 'Stack:', new Error().stack?.split('\n')[2]?.trim());
+    setMediaPreview(value);
+  };
   const previewBlockUntilRef = useRef<number>(0);
   const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
@@ -379,7 +385,7 @@ function App() {
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
     console.log('🔍 SEARCH: Starting search, clearing mediaPreview');
-    setMediaPreview(null);
+    setMediaPreviewDebug(null);
     // Block thumbnail clicks for 1.5 seconds after opening the modal
     previewBlockUntilRef.current = Date.now() + 1500;
     console.log('🔍 SEARCH: Set timing block until:', previewBlockUntilRef.current);
@@ -1035,10 +1041,10 @@ function App() {
         </div>
       )}
       {mediaPreview && !showEvidenceModal && (() => { console.log('📺 VIEWER: Rendering media preview modal', { mediaPreview, showEvidenceModal }); return true; })() && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreview(null)}>
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreviewDebug(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', width: 'min(90vw, 960px)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
-              <button onClick={() => setMediaPreview(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
+              <button onClick={() => setMediaPreviewDebug(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
             </div>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {mediaPreview.kind === 'video' ? (
@@ -1171,7 +1177,7 @@ function App() {
                             return;
                           }
                           console.log('🖼️ THUMBNAIL: Opening full viewer:', full);
-                          setMediaPreview({ src: full, kind: isVideo ? 'video' : 'image' });
+                          setMediaPreviewDebug({ src: full, kind: isVideo ? 'video' : 'image' });
                         }}>
                         {thumb ? (
                           <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
