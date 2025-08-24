@@ -65,12 +65,6 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
-  
-  // Debug wrapper for setMediaPreview to track all calls
-  const setMediaPreviewDebug = (value: { src: string; kind: 'image' | 'video' } | null) => {
-    console.log('🎬 MEDIA PREVIEW SET:', value, 'Stack:', new Error().stack?.split('\n')[2]?.trim());
-    setMediaPreview(value);
-  };
   const previewBlockUntilRef = useRef<number>(0);
   const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
@@ -384,11 +378,9 @@ function App() {
 
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
-    console.log('🔍 SEARCH: Starting search, clearing mediaPreview');
-    setMediaPreviewDebug(null);
-    // Block thumbnail clicks for 1.5 seconds after opening the modal
-    previewBlockUntilRef.current = Date.now() + 1500;
-    console.log('🔍 SEARCH: Set timing block until:', previewBlockUntilRef.current);
+    setMediaPreview(null);
+    // Block media viewer for 2 seconds after search
+    previewBlockUntilRef.current = Date.now() + 2000;
     try {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/search`, {
         method: 'POST',
@@ -397,14 +389,10 @@ function App() {
       });
       const data = await res.json();
       if (data?.found) {
-        console.log('🔍 SEARCH: Evidence found, opening thumbnails modal');
-        console.log('🔍 SEARCH: Current mediaPreview state before opening modal:', mediaPreview);
         addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
         showToast('Evidence discovered!', 'ok');
         await fetchEvidence();
         setShowEvidenceModal(true);
-        console.log('🔍 SEARCH: Evidence modal should now be open');
-        console.log('🔍 SEARCH: Current mediaPreview state after opening modal:', mediaPreview);
       } else if (data?.error) {
         addMessage(`❌ Search error: ${data.error}`);
         showToast('Search error', 'error');
@@ -1042,19 +1030,11 @@ function App() {
           </div>
         </div>
       )}
-      {(() => {
-        const shouldShow = mediaPreview && !showEvidenceModal;
-        console.log('📺 VIEWER: Condition check', { mediaPreview, showEvidenceModal, shouldShow });
-        if (shouldShow) {
-          console.log('📺 VIEWER: Rendering media preview modal');
-          return true;
-        }
-        return false;
-      })() && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreviewDebug(null)}>
+      {mediaPreview && !showEvidenceModal && Date.now() > previewBlockUntilRef.current && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 120 }} onClick={() => setMediaPreview(null)}>
           <div onClick={(e) => e.stopPropagation()} style={{ backgroundColor: '#0b1220', border: '1px solid #334155', borderRadius: '0.5rem', padding: '0.5rem', width: 'min(90vw, 960px)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.25rem' }}>
-              <button onClick={() => setMediaPreviewDebug(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
+              <button onClick={() => setMediaPreview(null)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>Close</button>
             </div>
             <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               {mediaPreview?.kind === 'video' ? (
@@ -1146,7 +1126,7 @@ function App() {
           </div>
         </div>
       )}
-      {showEvidenceModal && (() => { console.log('📋 MODAL: Evidence modal is rendering'); return true; })() && (
+      {showEvidenceModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -1164,7 +1144,7 @@ function App() {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
                   const full = e.media_url || e.file_url || e.url || e.media_path || thumb;
                   const isVideo = typeof full === 'string' && /\.(mp4|webm|ogg)(\?|$)/i.test(full);
-                  console.log('📋 EVIDENCE ITEM:', { title: e.title, thumb, full, isVideo });
+
                   return (
                     <div key={e.id} style={{ minWidth: '14rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
@@ -1173,21 +1153,10 @@ function App() {
                       </div>
                       <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: full ? 'pointer' : 'default' }}
                         onClick={() => {
-                          console.log('🖼️ THUMBNAIL: Click detected');
-                          if (!full) {
-                            console.log('🖼️ THUMBNAIL: No full URL, ignoring');
-                            return;
-                          }
-                          // If we just opened the modal from search, ignore thumbnail clicks briefly
-                          const now = Date.now();
-                          const blockUntil = previewBlockUntilRef.current;
-                          console.log('🖼️ THUMBNAIL: Timing check', { now, blockUntil, isBlocked: now < blockUntil });
-                          if (now < blockUntil) {
-                            console.log('🖼️ THUMBNAIL: Click blocked due to timing');
-                            return;
-                          }
-                          console.log('🖼️ THUMBNAIL: Opening full viewer:', full);
-                          setMediaPreviewDebug({ src: full, kind: isVideo ? 'video' : 'image' });
+                          if (!full) return;
+                          // Block clicks for 2 seconds after search
+                          if (Date.now() < previewBlockUntilRef.current) return;
+                          setMediaPreview({ src: full, kind: isVideo ? 'video' : 'image' });
                         }}>
                         {thumb ? (
                           <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
