@@ -343,11 +343,8 @@ function App() {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/evidence`);
       if (!res.ok) return;
       const data = await res.json();
-      console.log('Fetched evidence data:', data);
       if (Array.isArray(data)) setEvidence(data);
-    } catch (error) {
-      console.error('Error fetching evidence:', error);
-    }
+    } catch { }
   };
 
   const fetchTimeline = async () => {
@@ -1138,9 +1135,9 @@ function App() {
                         <span style={{ fontSize: '0.875rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.title}</span>
                         <span style={{ fontSize: '0.75rem', color: '#9ca3af', marginLeft: '0.5rem' }}>{e.type}</span>
                       </div>
-                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: 'default' }}>
+                      <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', backgroundColor: '#0f172a', borderRadius: '0.25rem', overflow: 'hidden', marginBottom: '0.5rem', cursor: 'default', pointerEvents: 'none' }}>
                         {thumb ? (
-                          <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          <img src={thumb} alt={e.title} style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }} />
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem' }}>
                             No preview

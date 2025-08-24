@@ -72,10 +72,21 @@
 img[src*="evidence"],
 img[src*="characters"],
 img[alt*="evidence"],
-img[alt*="Evidence"] {
-  pointer-events: none;
+img[alt*="Evidence"],
+img[alt*="syringe"],
+img[alt*="park footage"],
+img[alt*="hanky"],
+img[alt*="footage"] {
+  pointer-events: none !important;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
+}
+
+/* Extra protection - disable clicks on all images in evidence sections */
+div[style*="background-color: #0f172a"] img,
+div[style*="aspectRatio"] img {
+  pointer-events: none !important;
+  cursor: default !important;
 }
