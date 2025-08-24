@@ -64,8 +64,9 @@ function App() {
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
-  const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
-  const previewBlockUntilRef = useRef<number>(0);
+  // DISABLED: Media preview state temporarily removed
+  // const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
+  // const previewBlockUntilRef = useRef<number>(0);
   const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
@@ -378,9 +379,9 @@ function App() {
 
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
-    setMediaPreview(null);
-    // Block media viewer for 2 seconds after search
-    previewBlockUntilRef.current = Date.now() + 2000;
+    // DISABLED: Media preview calls temporarily removed
+    // setMediaPreview(null);
+    // previewBlockUntilRef.current = Date.now() + 2000;
     try {
       const res = await fetch(`${API_URL}/rooms/${myRoom}/search`, {
         method: 'POST',
