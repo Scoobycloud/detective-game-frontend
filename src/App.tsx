@@ -388,6 +388,7 @@ function App() {
         addMessage(`🔎 Found evidence: ${data.evidence?.title || 'Unknown'}`);
         showToast('Evidence discovered!', 'ok');
         void fetchEvidence();
+        setMediaPreview(null);
         setShowEvidenceModal(true);
       } else if (data?.error) {
         addMessage(`❌ Search error: ${data.error}`);
