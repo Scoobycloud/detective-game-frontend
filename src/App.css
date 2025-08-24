@@ -67,3 +67,15 @@
     transform: rotate(360deg);
   }
 }
+
+/* Disable image viewer for evidence and character images */
+img[src*="evidence"],
+img[src*="characters"],
+img[alt*="evidence"],
+img[alt*="Evidence"] {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
