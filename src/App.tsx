@@ -64,6 +64,9 @@ function App() {
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
+  const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
+  const [narrativeText, setNarrativeText] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   // DISABLED: Media preview state temporarily removed
   // const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
   // const previewBlockUntilRef = useRef<number>(0);
@@ -365,6 +368,45 @@ function App() {
       const data = await res.json();
       if (Array.isArray(data)) setAlibis(data);
     } catch { }
+  };
+
+  const generateGameFromNarrative = async (narrative: string) => {
+    if (!myRoom) return;
+    setIsGenerating(true);
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/generate-game`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ narrative }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to generate game');
+      }
+
+      const data = await res.json();
+      addMessage(`🎭 Game generated successfully! ${data.evidence_count} evidence items, ${data.clues_count} clues created.`);
+
+      // Refresh all data
+      await Promise.all([
+        fetchEvidence(),
+        fetchClues(),
+        fetchTimeline(),
+        fetchAlibis(),
+        fetchCredibility()
+      ]);
+
+      setShowGameMasterPanel(false);
+      setNarrativeText('');
+
+    } catch (error: any) {
+      addMessage(`❌ Game generation failed: ${error.message}`);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const fetchCredibility = async () => {
@@ -826,6 +868,7 @@ function App() {
               <button onClick={() => { void fetchEvidence(); setShowEvidenceModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧾 Evidence</button>
               <button onClick={() => { void fetchTimeline(); setShowTimelineModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🕰️ Timeline</button>
               <button onClick={() => { void fetchAlibis(); void fetchCredibility(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
+              <button onClick={() => setShowGameMasterPanel(true)} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: 'bold' }}>🎭 Game Master</button>
             </div>
           </div>
         )}
@@ -1294,6 +1337,78 @@ function App() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* GameMaster Panel */}
+      {showGameMasterPanel && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a855f7' }}>🎭 Game Master</h2>
+              <button
+                onClick={() => setShowGameMasterPanel(false)}
+                style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                Murder Mystery Narrative
+              </label>
+              <textarea
+                value={narrativeText}
+                onChange={(e) => setNarrativeText(e.target.value)}
+                placeholder="Write your murder mystery story here. Include details about:
+
+• Who was murdered and when/where
+• Who are the suspects and their relationships
+• What evidence exists and where to find it
+• What witnesses saw and when
+• Any motives, alibis, or timeline details
+
+Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. The murder weapon was a letter opener found in Mrs. Bellamy's purse. Tommy the janitor saw suspicious activity near the kitchen at 8:45 PM. Mrs. Holloway was seen arguing with the victim earlier that day about unpaid debts.'"
+                style={{
+                  width: '100%',
+                  minHeight: '200px',
+                  padding: '0.75rem',
+                  backgroundColor: '#111827',
+                  border: '1px solid #374151',
+                  borderRadius: '0.375rem',
+                  color: 'white',
+                  fontSize: '0.875rem',
+                  resize: 'vertical',
+                  fontFamily: 'inherit'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowGameMasterPanel(false)}
+                style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.375rem', cursor: 'pointer' }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => generateGameFromNarrative(narrativeText)}
+                disabled={!narrativeText.trim() || isGenerating}
+                style={{
+                  backgroundColor: !narrativeText.trim() || isGenerating ? '#4b5563' : '#7c3aed',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '0.375rem',
+                  cursor: !narrativeText.trim() || isGenerating ? 'not-allowed' : 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                {isGenerating ? '🎭 Generating...' : '🎭 Generate Game'}
+              </button>
+            </div>
           </div>
         </div>
       )}
