@@ -120,7 +120,8 @@ function App() {
     'Dr. Adrian Blackwood': '/images/characters/dr_adrian_blackwood.png',
   };
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://detective-game-online-z4oe.onrender.com';
+  console.log('🔧 API_URL:', API_URL);
 
   useEffect(() => {
     controlledRef.current = controlledCharacter;
@@ -373,18 +374,44 @@ function App() {
   const generateGameFromNarrative = async (narrative: string) => {
     if (!myRoom) return;
     setIsGenerating(true);
+
+    // Add timeout to prevent hanging
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
     try {
+      addMessage(`🎭 Starting game generation for room: ${myRoom}...`);
+
       const res = await fetch(`${API_URL}/rooms/${myRoom}/generate-game`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ narrative }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
+      addMessage(`🎭 API call completed with status: ${res.status}`);
+
       if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.error || 'Failed to generate game');
+        let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.detail || errorData.error || errorMessage;
+        } catch (parseError) {
+          // If we can't parse the error response, use the status text
+          try {
+            const text = await res.text();
+            if (text) errorMessage = text;
+          } catch (textError) {
+            // Use the default error message
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const data = await res.json();
@@ -403,9 +430,15 @@ function App() {
       setNarrativeText('');
 
     } catch (error: any) {
-      addMessage(`❌ Game generation failed: ${error.message}`);
+      if (error.name === 'AbortError') {
+        addMessage(`❌ Game generation timed out after 30 seconds`);
+      } else {
+        addMessage(`❌ Game generation failed: ${error.message}`);
+        console.error('Game generation error:', error);
+      }
     } finally {
       setIsGenerating(false);
+      clearTimeout(timeoutId);
     }
   };
 
