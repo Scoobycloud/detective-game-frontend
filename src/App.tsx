@@ -381,6 +381,7 @@ function App() {
 
     try {
       addMessage(`🎭 Starting game generation for room: ${myRoom}...`);
+      addMessage(`🔗 Using API URL: ${API_URL}`);
 
       const res = await fetch(`${API_URL}/rooms/${myRoom}/generate-game`, {
         method: 'POST',
