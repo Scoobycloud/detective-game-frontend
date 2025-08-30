@@ -65,7 +65,13 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
-  const [narrativeText, setNarrativeText] = useState('');
+  const [gameData, setGameData] = useState({
+    narrative: '',
+    clues: '',
+    evidence: '',
+    timeline: '',
+    alibis: ''
+  });
   const [isGenerating, setIsGenerating] = useState(false);
   // DISABLED: Media preview state temporarily removed
   // const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
@@ -371,7 +377,7 @@ function App() {
     } catch { }
   };
 
-  const generateGameFromNarrative = async (narrative: string) => {
+  const createGameFromStructuredData = async () => {
     if (!myRoom) return;
     setIsGenerating(true);
 
@@ -380,15 +386,15 @@ function App() {
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
     try {
-      addMessage(`🎭 Starting game generation for room: ${myRoom}...`);
+      addMessage(`🎭 Creating game for room: ${myRoom}...`);
       addMessage(`🔗 Using API URL: ${API_URL}`);
 
-      const res = await fetch(`${API_URL}/rooms/${myRoom}/generate-game`, {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/create-structured-game`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ narrative }),
+        body: JSON.stringify(gameData),
         signal: controller.signal
       });
 
@@ -416,7 +422,7 @@ function App() {
       }
 
       const data = await res.json();
-      addMessage(`🎭 Game generated successfully! ${data.evidence_count} evidence items, ${data.clues_count} clues created.`);
+      addMessage(`🎭 Game created successfully! ${data.evidence_count} evidence items, ${data.clues_count} clues created.`);
 
       // Refresh all data
       await Promise.all([
@@ -428,14 +434,20 @@ function App() {
       ]);
 
       setShowGameMasterPanel(false);
-      setNarrativeText('');
+      setGameData({
+        narrative: '',
+        clues: '',
+        evidence: '',
+        timeline: '',
+        alibis: ''
+      });
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        addMessage(`❌ Game generation timed out after 30 seconds`);
+        addMessage(`❌ Game creation timed out after 30 seconds`);
       } else {
-        addMessage(`❌ Game generation failed: ${error.message}`);
-        console.error('Game generation error:', error);
+        addMessage(`❌ Game creation failed: ${error.message}`);
+        console.error('Game creation error:', error);
       }
     } finally {
       setIsGenerating(false);
@@ -1389,35 +1401,151 @@ function App() {
               </button>
             </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
-                Murder Mystery Narrative
-              </label>
-              <textarea
-                value={narrativeText}
-                onChange={(e) => setNarrativeText(e.target.value)}
-                placeholder="Write your murder mystery story here. Include details about:
+            <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
+              {/* Narrative Story */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  📖 Murder Mystery Story
+                </label>
+                <textarea
+                  value={gameData.narrative}
+                  onChange={(e) => setGameData({...gameData, narrative: e.target.value})}
+                  placeholder="Write the complete murder mystery story. This will be stored as the game's narrative background.
 
-• Who was murdered and when/where
-• Who are the suspects and their relationships
-• What evidence exists and where to find it
-• What witnesses saw and when
-• Any motives, alibis, or timeline details
+Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. He was a respected but arrogant physician who had made many enemies...'"
+                  style={{
+                    width: '100%',
+                    minHeight: '120px',
+                    padding: '0.75rem',
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
 
-Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. The murder weapon was a letter opener found in Mrs. Bellamy's purse. Tommy the janitor saw suspicious activity near the kitchen at 8:45 PM. Mrs. Holloway was seen arguing with the victim earlier that day about unpaid debts.'"
-                style={{
-                  width: '100%',
-                  minHeight: '200px',
-                  padding: '0.75rem',
-                  backgroundColor: '#111827',
-                  border: '1px solid #374151',
-                  borderRadius: '0.375rem',
-                  color: 'white',
-                  fontSize: '0.875rem',
-                  resize: 'vertical',
-                  fontFamily: 'inherit'
-                }}
-              />
+              {/* Evidence Items */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  🧾 Evidence Items
+                </label>
+                <textarea
+                  value={gameData.evidence}
+                  onChange={(e) => setGameData({...gameData, evidence: e.target.value})}
+                  placeholder="List evidence items, one per line. Format: Title | Type | Location | Notes
+
+Examples:
+Letter Opener | item | Mrs. Bellamy's Purse | Murder weapon, planted as red herring
+Financial Ledger | document | Study Desk | Shows large unpaid debts
+Cigar Stub | item | Study Ashtray | Expensive Cuban, victim didn't smoke"
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '0.75rem',
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Clues */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  🧩 Clues
+                </label>
+                <textarea
+                  value={gameData.clues}
+                  onChange={(e) => setGameData({...gameData, clues: e.target.value})}
+                  placeholder="List clues, one per line. Format: Clue Text | Type | Source
+
+Types: IMPORTANT (key facts) or CONTRADICTION (conflicting statements)
+
+Examples:
+The window was broken from inside, not outside | IMPORTANT | Forensic Report
+Butler claims he was reading, but book was dusty | CONTRADICTION | Detective Observation"
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '0.75rem',
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Timeline */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  🕰️ Timeline Events
+                </label>
+                <textarea
+                  value={gameData.timeline}
+                  onChange={(e) => setGameData({...gameData, timeline: e.target.value})}
+                  placeholder="List timeline events, one per line. Format: Time | Phase | Label | Details
+
+Phases: pre_crime, during_crime, post_discovery
+
+Examples:
+2:00 PM | pre_crime | Public Argument | Holloway argues with victim over debts
+8:45 PM | during_crime | Suspicious Activity | Tommy sees shadow near kitchen door
+9:15 PM | post_discovery | Body Discovery | Housekeeper finds victim"
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '0.75rem',
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
+
+              {/* Alibis */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  🧭 Character Alibis
+                </label>
+                <textarea
+                  value={gameData.alibis}
+                  onChange={(e) => setGameData({...gameData, alibis: e.target.value})}
+                  placeholder="List character alibis, one per line. Format: Character | Timeframe | Account | Credibility (0-100)
+
+Examples:
+Mrs. Bellamy | 8:00-9:30 PM | Claims to visit sister in next village | 60
+Mr. Holloway | 8:00-10:00 PM | Says he was home reading by fire, wife confirms shakily | 45
+Dr. Blackwood | 8:30-9:15 PM | Lecture ended at 8:30, whereabouts unknown after | 25"
+                  style={{
+                    width: '100%',
+                    minHeight: '100px',
+                    padding: '0.75rem',
+                    backgroundColor: '#111827',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                    color: 'white',
+                    fontSize: '0.875rem',
+                    resize: 'vertical',
+                    fontFamily: 'inherit'
+                  }}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
@@ -1428,19 +1556,19 @@ Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. The murder w
                 Cancel
               </button>
               <button
-                onClick={() => generateGameFromNarrative(narrativeText)}
-                disabled={!narrativeText.trim() || isGenerating}
+                onClick={() => createGameFromStructuredData()}
+                disabled={!gameData.narrative.trim() || isGenerating}
                 style={{
-                  backgroundColor: !narrativeText.trim() || isGenerating ? '#4b5563' : '#7c3aed',
+                  backgroundColor: !gameData.narrative.trim() || isGenerating ? '#4b5563' : '#7c3aed',
                   color: 'white',
                   border: 'none',
                   padding: '0.5rem 1rem',
                   borderRadius: '0.375rem',
-                  cursor: !narrativeText.trim() || isGenerating ? 'not-allowed' : 'pointer',
+                  cursor: !gameData.narrative.trim() || isGenerating ? 'not-allowed' : 'pointer',
                   fontWeight: '600'
                 }}
               >
-                {isGenerating ? '🎭 Generating...' : '🎭 Generate Game'}
+                {isGenerating ? '🎭 Creating...' : '🎭 Create Game'}
               </button>
             </div>
           </div>
