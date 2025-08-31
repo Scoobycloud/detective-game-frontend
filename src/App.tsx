@@ -57,6 +57,7 @@ function App() {
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
   const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
   const [caseInfo, setCaseInfo] = useState<{ status?: string; seed?: string; narrative?: string } | null>(null);
+  const [charactersDb, setCharactersDb] = useState<Array<{ name: string; role?: string; personality?: any }>>([]);
   const [showProfile, setShowProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
@@ -390,6 +391,17 @@ function App() {
     } catch { }
   };
 
+  const fetchCharacters = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/characters`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const rows = Array.isArray(data?.characters) ? data.characters : [];
+      setCharactersDb(rows);
+    } catch { }
+  };
+
   const createGameFromStructuredData = async () => {
     if (!myRoom) return;
     setIsGenerating(true);
@@ -516,6 +528,7 @@ function App() {
     void fetchAlibis();
     void fetchCredibility();
     void fetchCase();
+    void fetchCharacters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
@@ -823,10 +836,16 @@ function App() {
           <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '0.75rem' }}>🔍 Interrogation</h3>
 
-            <div style={{ marginBottom: '0.75rem', fontSize: '0.875rem', color: '#d1d5db' }}>Select a suspect by clicking their card:</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <div style={{ fontSize: '0.875rem', color: '#d1d5db' }}>Select a suspect by clicking their card:</div>
+              <div>
+                <button onClick={() => void fetchCharacters()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+              </div>
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
-              {characters.map((char) => {
+              {((charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))) as Array<{ name: string; role?: string; personality?: any }>).map((c) => {
+                const char = c.name;
                 const isSelected = selectedCharacter === char;
                 return (
                   <button
@@ -885,6 +904,13 @@ function App() {
                       )}
                     </div>
                     <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
+                    {(c.role || (Array.isArray(c.personality?.traits) && c.personality.traits.length > 0)) && (
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.125rem' }}>
+                        {c.role ? `${c.role}` : ''}
+                        {c.role && Array.isArray(c.personality?.traits) && c.personality.traits.length > 0 ? ' • ' : ''}
+                        {Array.isArray(c.personality?.traits) ? (c.personality.traits.slice(0, 2).join(', ')) : ''}
+                      </div>
+                    )}
                   </button>
                 );
               })}
