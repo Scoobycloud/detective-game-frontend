@@ -1275,6 +1275,28 @@ function App() {
                 <option value="">All Types</option>
                 {Array.from(new Set(evidence.map(e => e.type))).map(t => (<option key={t} value={t}>{t}</option>))}
               </select>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Quick:</span>
+                {(['item', 'document', 'image', 'video'] as string[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setEvidenceFilter({ ...evidenceFilter, type: evidenceFilter.type === t ? '' : t })}
+                    style={{
+                      backgroundColor: evidenceFilter.type === t ? '#2563eb' : '#374151',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '9999px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >{t}</button>
+                ))}
+                <button
+                  onClick={() => setEvidenceFilter({ character: evidenceFilter.character, type: '' })}
+                  style={{ backgroundColor: '#6b7280', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '9999px', cursor: 'pointer', fontSize: '0.75rem' }}
+                >All</button>
+              </div>
               <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
               <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
             </div>
@@ -1444,6 +1466,28 @@ function App() {
                 <option value="">All Types</option>
                 {Array.from(new Set(clues.map(c => c.type || ''))).filter(Boolean).map(t => (<option key={t} value={t}>{t}</option>))}
               </select>
+              <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Quick:</span>
+                {(['IMPORTANT', 'CONTRADICTION'] as string[]).map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setCluesFilter({ ...cluesFilter, type: cluesFilter.type === t ? '' : t })}
+                    style={{
+                      backgroundColor: cluesFilter.type === t ? '#2563eb' : '#374151',
+                      color: 'white',
+                      border: 'none',
+                      padding: '0.25rem 0.5rem',
+                      borderRadius: '9999px',
+                      cursor: 'pointer',
+                      fontSize: '0.75rem'
+                    }}
+                  >{t}</button>
+                ))}
+                <button
+                  onClick={() => setCluesFilter({ character: cluesFilter.character, type: '' })}
+                  style={{ backgroundColor: '#6b7280', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '9999px', cursor: 'pointer', fontSize: '0.75rem' }}
+                >All</button>
+              </div>
               <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
               <button onClick={() => setShowCluesModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
             </div>
