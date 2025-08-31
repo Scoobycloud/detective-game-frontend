@@ -443,7 +443,8 @@ function App() {
         fetchClues(),
         fetchTimeline(),
         fetchAlibis(),
-        fetchCredibility()
+        fetchCredibility(),
+        fetchCase()
       ]);
 
       setShowGameMasterPanel(false);
