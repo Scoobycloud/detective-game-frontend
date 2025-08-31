@@ -52,6 +52,7 @@ function App() {
     url?: string | null;
     file_url?: string | null;
     media_path?: string | null;
+    character_name?: string | null;
   }>>([]);
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
@@ -1336,56 +1337,56 @@ function App() {
                                 ▶
                               </div>
                             </div>
-                                                  ) : (
-                          <div style={{
-                            position: 'relative',
-                            width: '100%',
-                            height: '100%',
-                            borderRadius: '0.25rem',
-                            overflow: 'hidden'
-                          }}>
-                            <img
-                              src={thumb}
-                              alt={`${e.title} thumbnail`}
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                objectFit: 'cover',
-                                pointerEvents: 'none',
-                                userSelect: 'none',
-                                WebkitUserSelect: 'none',
-                                MozUserSelect: 'none',
-                                msUserSelect: 'none',
-                                borderRadius: '0.25rem'
-                              }}
-                              onError={(event) => {
-                                const img = event.currentTarget;
-                                img.style.display = 'none';
-                                const parent = img.parentElement;
-                                if (parent) {
-                                  parent.innerHTML = `
-                                    <div style="
-                                      width: 100%;
-                                      height: 100%;
-                                      background-color: #374151;
-                                      display: flex;
-                                      align-items: center;
-                                      justify-content: center;
-                                      color: #9ca3af;
-                                      font-size: 0.75rem;
-                                      text-align: center;
-                                      padding: 0.25rem;
-                                      border-radius: 0.25rem;
-                                    ">
-                                      Image failed to load<br/>
-                                      <small style="color: #64748b;">${thumb}</small>
-                                    </div>
-                                  `;
-                                }
-                              }}
-                            />
-                          </div>
-                        )
+                          ) : (
+                            <div style={{
+                              position: 'relative',
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '0.25rem',
+                              overflow: 'hidden'
+                            }}>
+                              <img
+                                src={thumb}
+                                alt={`${e.title} thumbnail`}
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'cover',
+                                  pointerEvents: 'none',
+                                  userSelect: 'none',
+                                  WebkitUserSelect: 'none',
+                                  MozUserSelect: 'none',
+                                  msUserSelect: 'none',
+                                  borderRadius: '0.25rem'
+                                }}
+                                onError={(event) => {
+                                  const img = event.currentTarget;
+                                  img.style.display = 'none';
+                                  const parent = img.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = `
+                                      <div style="
+                                        width: 100%;
+                                        height: 100%;
+                                        background-color: #374151;
+                                        display: flex;
+                                        align-items: center;
+                                        justify-content: center;
+                                        color: #9ca3af;
+                                        font-size: 0.75rem;
+                                        text-align: center;
+                                        padding: 0.25rem;
+                                        border-radius: 0.25rem;
+                                      ">
+                                        Image failed to load<br/>
+                                        <small style="color: #64748b;">${thumb}</small>
+                                      </div>
+                                    `;
+                                  }
+                                }}
+                              />
+                            </div>
+                          )
                         ) : (
                           <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b', fontSize: '0.75rem' }}>
                             No preview
@@ -1399,6 +1400,9 @@ function App() {
                         <div style={{ fontSize: '0.75rem', color: e.is_discovered ? '#10b981' : '#9ca3af' }}>
                           {e.is_discovered ? 'Discovered' : 'Undiscovered'}
                         </div>
+                      )}
+                      {e.character_name && (
+                        <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Linked: {e.character_name}</div>
                       )}
                       {e.notes && (
                         <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
@@ -1431,6 +1435,9 @@ function App() {
                       <span style={{ fontSize: '0.75rem', color: '#d1d5db' }}>{c.source || 'Unknown'}</span>
                       <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{c.type || 'FACT'}</span>
                     </div>
+                    { (c as any).character_name && (
+                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Linked: {(c as any).character_name}</div>
+                    )}
                     <div style={{ fontSize: '0.875rem' }}>{c.text}</div>
                     {c.timestamp && (
                       <div style={{ fontSize: '0.75rem', color: '#6b7280', marginTop: '0.25rem' }}>{new Date(c.timestamp).toLocaleString()}</div>
@@ -1492,12 +1499,12 @@ Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. He was a res
                 <textarea
                   value={gameData.evidence}
                   onChange={(e) => setGameData({...gameData, evidence: e.target.value})}
-                  placeholder="List evidence items, one per line. Format: Title | Type | Location | Notes
+                  placeholder="List evidence items, one per line. Format: Title | Type | Location | Notes | Linked Character (optional)
 
 Examples:
-Letter Opener | item | Mrs. Bellamy's Purse | Murder weapon, planted as red herring
-Financial Ledger | document | Study Desk | Shows large unpaid debts
-Cigar Stub | item | Study Ashtray | Expensive Cuban, victim didn't smoke"
+Letter Opener | item | Mrs. Bellamy's Purse | Murder weapon, planted as red herring | Mrs. Bellamy
+Financial Ledger | document | Study Desk | Shows large unpaid debts | Mr. Holloway
+Cigar Stub | item | Study Ashtray | Expensive Cuban, victim didn't smoke | Dr. Adrian Blackwood"
                   style={{
                     width: '100%',
                     minHeight: '100px',
@@ -1521,13 +1528,13 @@ Cigar Stub | item | Study Ashtray | Expensive Cuban, victim didn't smoke"
                 <textarea
                   value={gameData.clues}
                   onChange={(e) => setGameData({...gameData, clues: e.target.value})}
-                  placeholder="List clues, one per line. Format: Clue Text | Type | Source
+                  placeholder="List clues, one per line. Format: Clue Text | Type | Source | Linked Character (optional)
 
 Types: IMPORTANT (key facts) or CONTRADICTION (conflicting statements)
 
 Examples:
-The window was broken from inside, not outside | IMPORTANT | Forensic Report
-Butler claims he was reading, but book was dusty | CONTRADICTION | Detective Observation"
+The window was broken from inside, not outside | IMPORTANT | Forensic Report | Tommy the Janitor
+Butler claims he was reading, but book was dusty | CONTRADICTION | Detective Observation | Mr. Holloway"
                   style={{
                     width: '100%',
                     minHeight: '100px',
