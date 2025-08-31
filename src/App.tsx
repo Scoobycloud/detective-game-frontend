@@ -56,6 +56,7 @@ function App() {
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
   const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
+  const [caseInfo, setCaseInfo] = useState<{ status?: string; seed?: string; narrative?: string } | null>(null);
   const [showProfile, setShowProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
@@ -347,6 +348,18 @@ function App() {
     } catch { }
   };
 
+  const fetchCase = async () => {
+    if (!myRoom) return;
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/case`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const c = data?.case || null;
+      const narrative = c?.summary?.narrative || '';
+      setCaseInfo({ status: c?.status, seed: c?.seed, narrative });
+    } catch { }
+  };
+
   const fetchEvidence = async () => {
     if (!myRoom) return;
     try {
@@ -501,6 +514,7 @@ function App() {
     void fetchTimeline();
     void fetchAlibis();
     void fetchCredibility();
+    void fetchCase();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [myRoom]);
 
@@ -779,6 +793,21 @@ function App() {
       </div>
 
       <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '1rem' }}>
+        {/* Briefing */}
+        {caseInfo?.narrative && (
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>📖 Briefing</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {caseInfo.status && (
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>status: {caseInfo.status}</span>
+                )}
+                <button onClick={() => void fetchCase()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+              </div>
+            </div>
+            <div style={{ fontSize: '0.875rem', color: '#d1d5db', whiteSpace: 'pre-wrap' }}>{caseInfo.narrative}</div>
+          </div>
+        )}
         {/* Game Messages */}
         <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', height: '24rem', overflowY: 'auto', marginBottom: '1rem' }}>
           {messages.map((msg, i) => (
