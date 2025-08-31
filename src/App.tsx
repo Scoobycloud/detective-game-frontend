@@ -59,6 +59,8 @@ function App() {
   const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
   const [caseInfo, setCaseInfo] = useState<{ status?: string; seed?: string; narrative?: string } | null>(null);
   const [charactersDb, setCharactersDb] = useState<Array<{ name: string; role?: string; personality?: any }>>([]);
+  const [evidenceFilter, setEvidenceFilter] = useState<{ character: string; type: string }>({ character: '', type: '' });
+  const [cluesFilter, setCluesFilter] = useState<{ character: string; type: string }>({ character: '', type: '' });
   const [showProfile, setShowProfile] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profile, setProfile] = useState<{ name?: string; dob?: string; address?: string; image_url?: string; record?: string } | null>(null);
@@ -1261,18 +1263,30 @@ function App() {
       {showEvidenceModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧾 Evidence</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-                <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginRight: 'auto' }}>🧾 Evidence</h3>
+              <select value={evidenceFilter.character} onChange={(e) => setEvidenceFilter({ ...evidenceFilter, character: e.target.value })} style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.25rem 0.5rem' }}>
+                <option value="">All Characters</option>
+                {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+              <select value={evidenceFilter.type} onChange={(e) => setEvidenceFilter({ ...evidenceFilter, type: e.target.value })} style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.25rem 0.5rem' }}>
+                <option value="">All Types</option>
+                {Array.from(new Set(evidence.map(e => e.type))).map(t => (<option key={t} value={t}>{t}</option>))}
+              </select>
+              <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+              <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
             </div>
             {evidence.filter(e => e.is_discovered).length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
             ) : (
               <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                {evidence.filter(e => e.is_discovered).map((e) => {
+                {evidence
+                  .filter(e => e.is_discovered)
+                  .filter(e => evidenceFilter.character ? (e.character_name === evidenceFilter.character) : true)
+                  .filter(e => evidenceFilter.type ? (e.type === evidenceFilter.type) : true)
+                  .map((e) => {
                   const thumb = e.thumbnail_url || e.thumb_url || e.thumbnail || e.thumb_path || '';
 
                   return (
@@ -1418,18 +1432,29 @@ function App() {
       {showCluesModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧩 Clues</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-                <button onClick={() => setShowCluesModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
-              </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginRight: 'auto' }}>🧩 Clues</h3>
+              <select value={cluesFilter.character} onChange={(e) => setCluesFilter({ ...cluesFilter, character: e.target.value })} style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.25rem 0.5rem' }}>
+                <option value="">All Characters</option>
+                {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+              <select value={cluesFilter.type} onChange={(e) => setCluesFilter({ ...cluesFilter, type: e.target.value })} style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.25rem 0.5rem' }}>
+                <option value="">All Types</option>
+                {Array.from(new Set(clues.map(c => c.type || ''))).filter(Boolean).map(t => (<option key={t} value={t}>{t}</option>))}
+              </select>
+              <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+              <button onClick={() => setShowCluesModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
             </div>
             {clues.length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No clues yet. Ask questions to gather information.</div>
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {clues.map((c, idx) => (
+                {clues
+                  .filter(c => cluesFilter.character ? ((c as any).character_name === cluesFilter.character) : true)
+                  .filter(c => cluesFilter.type ? ((c.type || '') === cluesFilter.type) : true)
+                  .map((c, idx) => (
                   <div key={idx} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
                       <span style={{ fontSize: '0.75rem', color: '#d1d5db' }}>{c.source || 'Unknown'}</span>
