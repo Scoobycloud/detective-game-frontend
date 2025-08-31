@@ -56,7 +56,7 @@ function App() {
   }>>([]);
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
-  const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
+  const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number; avg_credibility?: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
   const [caseInfo, setCaseInfo] = useState<{ status?: string; seed?: string; narrative?: string } | null>(null);
   const [charactersDb, setCharactersDb] = useState<Array<{ name: string; role?: string; personality?: any }>>([]);
   const [evidenceFilter, setEvidenceFilter] = useState<{ character: string; type: string }>({ character: '', type: '' });
@@ -914,6 +914,23 @@ function App() {
                         {Array.isArray(c.personality?.traits) ? (c.personality.traits.slice(0, 2).join(', ')) : ''}
                       </div>
                     )}
+                    {(() => {
+                      const cSig = credibility.counts.find(x => x.character === char);
+                      if (!cSig) return null;
+                      const avg = typeof cSig.avg_credibility === 'number' ? cSig.avg_credibility : undefined;
+                      const color = avg === undefined ? '#6b7280' : avg >= 66 ? '#16a34a' : avg >= 33 ? '#f59e0b' : '#dc2626';
+                      const title = `Avg credibility: ${avg !== undefined ? avg.toFixed(1) : '—'} | Contradictions: ${cSig.contradictions}`;
+                      return (
+                        <div title={title} style={{ marginTop: '0.125rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <span style={{ backgroundColor: color, color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>
+                            {avg !== undefined ? avg.toFixed(0) : '—'}
+                          </span>
+                          {cSig.contradictions > 0 && (
+                            <span style={{ backgroundColor: '#7c2d12', color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>×{cSig.contradictions}</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </button>
                 );
               })}
@@ -1096,6 +1113,23 @@ function App() {
                           )}
                         </div>
                         <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
+                        {(() => {
+                          const cSig = credibility.counts.find(x => x.character === char);
+                          if (!cSig) return null;
+                          const avg = typeof cSig.avg_credibility === 'number' ? cSig.avg_credibility : undefined;
+                          const color = avg === undefined ? '#6b7280' : avg >= 66 ? '#16a34a' : avg >= 33 ? '#f59e0b' : '#dc2626';
+                          const title = `Avg credibility: ${avg !== undefined ? avg.toFixed(1) : '—'} | Contradictions: ${cSig.contradictions}`;
+                          return (
+                            <div title={title} style={{ marginTop: '0.125rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                              <span style={{ backgroundColor: color, color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>
+                                {avg !== undefined ? avg.toFixed(0) : '—'}
+                              </span>
+                              {cSig.contradictions > 0 && (
+                                <span style={{ backgroundColor: '#7c2d12', color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>×{cSig.contradictions}</span>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </button>
                     );
                   })}
@@ -1204,9 +1238,11 @@ function App() {
                   <div key={a.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{a.character}</span>
-                      {typeof a.credibility_score === 'number' && (
-                        <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>cred: {a.credibility_score.toFixed(1)}</span>
-                      )}
+                      {typeof a.credibility_score === 'number' && (() => {
+                        const avg = a.credibility_score;
+                        const color = avg >= 66 ? '#16a34a' : avg >= 33 ? '#f59e0b' : '#dc2626';
+                        return <span title="Alibi credibility" style={{ fontSize: '0.75rem', color }}>{avg.toFixed(1)}</span>;
+                      })()}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Time: {a.timeframe}</div>
                     <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{a.account}</div>
@@ -1297,8 +1333,8 @@ function App() {
                   style={{ backgroundColor: '#6b7280', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '9999px', cursor: 'pointer', fontSize: '0.75rem' }}
                 >All</button>
               </div>
-              <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-              <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+                <button onClick={() => void fetchEvidence()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowEvidenceModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
             </div>
             {evidence.filter(e => e.is_discovered).length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No evidence recorded yet.</div>
@@ -1488,8 +1524,8 @@ function App() {
                   style={{ backgroundColor: '#6b7280', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '9999px', cursor: 'pointer', fontSize: '0.75rem' }}
                 >All</button>
               </div>
-              <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
-              <button onClick={() => setShowCluesModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+                <button onClick={() => void fetchClues()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowCluesModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
             </div>
             {clues.length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No clues yet. Ask questions to gather information.</div>
