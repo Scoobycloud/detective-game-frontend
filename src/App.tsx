@@ -156,7 +156,20 @@ function App() {
 
   useEffect(() => {
     // Handle redirect result for Safari/iOS popup blockers
-    getRedirectResult(auth).catch(() => { });
+    getRedirectResult(auth)
+      .then((result: any) => {
+        if (result && result.user) {
+          addMessage(`✅ Signed in (redirect): ${result.user.email || result.user.uid}`);
+        }
+      })
+      .catch((err: any) => {
+        try {
+          const code = String(err?.code || '');
+          const msg = String(err?.message || '');
+          addMessage(`❌ Redirect sign-in error: ${code} ${msg}`);
+          console.error('Redirect sign-in error:', err);
+        } catch {}
+      });
   }, []);
 
   const handleSignIn = async () => {
@@ -166,20 +179,24 @@ function App() {
       const isSafari = (/Safari\//.test(ua) && !/Chrome\//.test(ua)) || /iPhone|iPad|iPod/i.test(ua);
       if (isSafari) {
         // Safari/iOS blocks third-party cookies more aggressively → use redirect
-        await signInWithRedirect(auth, provider);
+          await signInWithRedirect(auth, provider);
         return;
-      }
+        }
       // Try popup; on ANY error, fall back to redirect
       try {
         await signInWithPopup(auth, provider);
-        addMessage('✅ Signed in');
+      addMessage('✅ Signed in');
       } catch (err: any) {
-        const code = err?.code || '';
-        addMessage(`ℹ️ Popup sign-in failed (${code || 'unknown'}), using redirect…`);
+        const code = String(err?.code || '');
+        const msg = String(err?.message || '');
+        addMessage(`ℹ️ Popup sign-in failed (${code || 'unknown'}). Falling back to redirect…`);
+        console.error('Popup sign-in error:', err);
         await signInWithRedirect(auth, provider);
       }
     } catch (e: any) {
-      addMessage(`❌ Sign-in failed: ${e?.message || e}`);
+      const msg = String(e?.message || e);
+      addMessage(`❌ Sign-in failed: ${msg}`);
+      console.error('Sign-in failed:', e);
     } finally {
       setAuthBusy(false);
     }
@@ -198,6 +215,11 @@ function App() {
   useEffect(() => {
     addMessage('🎮 Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
+    try {
+      const origin = window.location.origin;
+      const authDomain = (auth as any)?.app?.options?.authDomain || 'n/a';
+      addMessage(`🪪 Auth debug: origin=${origin}, authDomain=${authDomain}`);
+    } catch {}
   }, []);
 
   const loadRooms = useCallback(async () => {
