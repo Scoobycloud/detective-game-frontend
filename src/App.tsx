@@ -1025,7 +1025,7 @@ function App() {
               })}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', opacity: (caseInfo?.status && caseInfo.status !== 'interrogation' && caseInfo.status !== 'investigation') ? 0.5 : 1, pointerEvents: (caseInfo?.status && caseInfo.status !== 'interrogation' && caseInfo.status !== 'investigation') ? 'none' : 'auto' }}>
               <input
                 type="text"
                 value={question}
@@ -1047,7 +1047,7 @@ function App() {
               </button>
             </div>
 
-            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem' }}>
+            <div style={{ marginTop: '0.75rem', display: 'flex', gap: '0.5rem', opacity: (caseInfo?.status && caseInfo.status !== 'investigation' && caseInfo.status !== 'interrogation') ? 0.5 : 1, pointerEvents: (caseInfo?.status && caseInfo.status !== 'investigation' && caseInfo.status !== 'interrogation') ? 'none' : 'auto' }}>
               <input
                 type="text"
                 placeholder="Search a location (e.g., Study fireplace)"
@@ -1081,6 +1081,29 @@ function App() {
               <button onClick={() => { void fetchAlibis(); void fetchCredibility(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
               <button onClick={() => { if (!charactersDb.length) { void fetchCharacters(); } const first = (charactersDb[0]?.name) || ''; setScopeCharacter(first); if (first) { void loadCharacterScope(first); } setShowScopeModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧠 Knowledge Scope</button>
               <button onClick={() => setShowGameMasterPanel(true)} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: 'bold' }}>🎭 Game Master</button>
+              <select
+                value={(caseInfo?.status || 'open') as any}
+                onChange={async (e) => {
+                  const v = e.target.value;
+                  try {
+                    await fetch(`${API_URL}/rooms/${myRoom}/status`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ status: v })
+                    });
+                    await fetchCase();
+                    showToast(`Case status → ${v}`, 'ok');
+                  } catch {}
+                }}
+                style={{ marginLeft: 'auto', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.25rem 0.5rem' }}
+                title="Case status"
+              >
+                <option value="open">open</option>
+                <option value="investigation">investigation</option>
+                <option value="interrogation">interrogation</option>
+                <option value="accusation">accusation</option>
+                <option value="closed">closed</option>
+              </select>
             </div>
           </div>
         )}
