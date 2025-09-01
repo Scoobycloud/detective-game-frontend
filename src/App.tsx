@@ -59,6 +59,12 @@ function App() {
   const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number; avg_credibility?: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
   const [caseInfo, setCaseInfo] = useState<{ status?: string; seed?: string; narrative?: string } | null>(null);
   const [charactersDb, setCharactersDb] = useState<Array<{ name: string; role?: string; personality?: any }>>([]);
+  // Admin: Knowledge Scope editor
+  const [showScopeModal, setShowScopeModal] = useState(false);
+  const [scopeCharacter, setScopeCharacter] = useState<string>('');
+  const [scopeAllowedText, setScopeAllowedText] = useState<string>('');
+  const [scopeCannotText, setScopeCannotText] = useState<string>('');
+  const [scopeBusy, setScopeBusy] = useState<boolean>(false);
   const [evidenceFilter, setEvidenceFilter] = useState<{ character: string; type: string }>({ character: '', type: '' });
   const [cluesFilter, setCluesFilter] = useState<{ character: string; type: string }>({ character: '', type: '' });
   const [showProfile, setShowProfile] = useState(false);
@@ -403,6 +409,50 @@ function App() {
       const rows = Array.isArray(data?.characters) ? data.characters : [];
       setCharactersDb(rows);
     } catch { }
+  };
+
+  const loadCharacterScope = async (name: string) => {
+    if (!myRoom || !name) return;
+    setScopeBusy(true);
+    try {
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/characters/${encodeURIComponent(name)}`);
+      const data = await res.json();
+      const ch = (data?.character || {}) as any;
+      const ks = (ch.knowledge_scope || {}) as any;
+      const allowed = Array.isArray(ks.allowed) ? ks.allowed : [];
+      const cannot = Array.isArray(ks.cannot) ? ks.cannot : [];
+      setScopeAllowedText(allowed.join('\n'));
+      setScopeCannotText(cannot.join('\n'));
+    } catch {
+      setScopeAllowedText('');
+      setScopeCannotText('');
+    } finally {
+      setScopeBusy(false);
+    }
+  };
+
+  const saveCharacterScope = async () => {
+    if (!myRoom || !scopeCharacter) return;
+    setScopeBusy(true);
+    try {
+      const allowed = scopeAllowedText.split('\n').map(s => s.trim()).filter(Boolean);
+      const cannot = scopeCannotText.split('\n').map(s => s.trim()).filter(Boolean);
+      const res = await fetch(`${API_URL}/rooms/${myRoom}/characters/${encodeURIComponent(scopeCharacter)}/knowledge_scope`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ knowledge_scope: { allowed, cannot } })
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.detail || 'Update failed');
+      }
+      showToast('Knowledge scope saved', 'ok');
+    } catch (e: any) {
+      addMessage(`❌ Save failed: ${e?.message || e}`);
+      showToast('Save failed', 'error');
+    } finally {
+      setScopeBusy(false);
+    }
   };
 
   const createGameFromStructuredData = async () => {
@@ -990,6 +1040,7 @@ function App() {
               <button onClick={() => { void fetchEvidence(); setShowEvidenceModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧾 Evidence</button>
               <button onClick={() => { void fetchTimeline(); setShowTimelineModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🕰️ Timeline</button>
               <button onClick={() => { void fetchAlibis(); void fetchCredibility(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
+              <button onClick={() => { if (!charactersDb.length) { void fetchCharacters(); } const first = (charactersDb[0]?.name) || ''; setScopeCharacter(first); if (first) { void loadCharacterScope(first); } setShowScopeModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧠 Knowledge Scope</button>
               <button onClick={() => setShowGameMasterPanel(true)} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: 'bold' }}>🎭 Game Master</button>
             </div>
           </div>
@@ -1293,6 +1344,44 @@ function App() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {showScopeModal && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 85 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '40rem', borderRadius: '0.5rem', padding: '1rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+              <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧠 Knowledge Scope Admin</h3>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => { if (scopeCharacter) void loadCharacterScope(scopeCharacter); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
+                <button onClick={() => setShowScopeModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
+              </div>
+            </div>
+            <div style={{ display: 'grid', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.875rem', color: '#d1d5db' }}>Character:</span>
+                <select value={scopeCharacter} onChange={(e) => { const n = e.target.value; setScopeCharacter(n); if (n) { void loadCharacterScope(n); } }} style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.25rem 0.5rem' }}>
+                  <option value="">Select…</option>
+                  {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                    <option key={c.name} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Allowed topics</div>
+                  <textarea value={scopeAllowedText} onChange={(e) => setScopeAllowedText(e.target.value)} placeholder={'One topic per line'} style={{ width: '100%', minHeight: '8rem', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem', resize: 'vertical' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.25rem' }}>Forbidden topics</div>
+                  <textarea value={scopeCannotText} onChange={(e) => setScopeCannotText(e.target.value)} placeholder={'One topic per line'} style={{ width: '100%', minHeight: '8rem', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem', resize: 'vertical' }} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <button onClick={() => { setScopeAllowedText(''); setScopeCannotText(''); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Clear</button>
+                <button onClick={() => void saveCharacterScope()} disabled={!scopeCharacter || scopeBusy} style={{ backgroundColor: (!scopeCharacter || scopeBusy) ? '#4b5563' : '#16a34a', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: (!scopeCharacter || scopeBusy) ? 'not-allowed' : 'pointer' }}>{scopeBusy ? 'Saving…' : 'Save'}</button>
+              </div>
+            </div>
           </div>
         </div>
       )}
