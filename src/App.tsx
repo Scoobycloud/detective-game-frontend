@@ -162,15 +162,22 @@ function App() {
   const handleSignIn = async () => {
     try {
       setAuthBusy(true);
-      // Try popup first; if blocked, fall back to redirect
-      await signInWithPopup(auth, provider).catch(async (err) => {
-        if (err?.code && String(err.code).includes('popup')) {
-          await signInWithRedirect(auth, provider);
-        } else {
-          throw err;
-        }
-      });
-      addMessage('✅ Signed in');
+      const ua = navigator.userAgent || '';
+      const isSafari = (/Safari\//.test(ua) && !/Chrome\//.test(ua)) || /iPhone|iPad|iPod/i.test(ua);
+      if (isSafari) {
+        // Safari/iOS blocks third-party cookies more aggressively → use redirect
+        await signInWithRedirect(auth, provider);
+        return;
+      }
+      // Try popup; on ANY error, fall back to redirect
+      try {
+        await signInWithPopup(auth, provider);
+        addMessage('✅ Signed in');
+      } catch (err: any) {
+        const code = err?.code || '';
+        addMessage(`ℹ️ Popup sign-in failed (${code || 'unknown'}), using redirect…`);
+        await signInWithRedirect(auth, provider);
+      }
     } catch (e: any) {
       addMessage(`❌ Sign-in failed: ${e?.message || e}`);
     } finally {
