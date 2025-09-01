@@ -1747,6 +1747,64 @@ Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. He was a res
                 />
               </div>
 
+              {/* Case Summary Admin */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  🛠️ Case Summary (GM)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: '0.5rem' }}>
+                  {['victim','motive','weapon','location','time'].map((k) => (
+                    <input key={k} defaultValue={(caseInfo as any)?.[k] || (caseInfo as any)?.summary?.[k] || ''} placeholder={k} id={`gm_${k}`} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white', fontSize: '0.875rem' }} />
+                  ))}
+                </div>
+                <div style={{ marginTop: '0.5rem' }}>
+                  <button onClick={async () => {
+                    if (!myRoom) return;
+                    const val = (id: string) => (document.getElementById(id) as HTMLInputElement | null)?.value || '';
+                    const payload: any = { victim: val('gm_victim'), motive: val('gm_motive'), weapon: val('gm_weapon'), location: val('gm_location'), time: val('gm_time') };
+                    try {
+                      await fetch(`${API_URL}/rooms/${myRoom}/summary`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                      await fetchCase();
+                      showToast('Case summary updated', 'ok');
+                    } catch (e) { showToast('Update failed', 'error'); }
+                  }} style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Save Summary</button>
+                </div>
+              </div>
+
+              {/* Character Admin */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  🧑‍💼 Character Admin (GM)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                  <select id="gm_char_name" defaultValue={(charactersDb[0]?.name) || ''} style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.5rem' }}>
+                    {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                      <option key={c.name} value={c.name}>{c.name}</option>
+                    ))}
+                  </select>
+                  <input id="gm_char_role" placeholder="role" style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  <input id="gm_char_traits" placeholder="traits (comma-separated)" style={{ gridColumn: 'span 2', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  <select id="gm_char_honesty" defaultValue="honest" style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.5rem' }}>
+                    <option value="honest">honest</option>
+                    <option value="deceptive">deceptive</option>
+                    <option value="forgetful">forgetful</option>
+                  </select>
+                  <button onClick={async () => {
+                    if (!myRoom) return;
+                    const name = (document.getElementById('gm_char_name') as HTMLSelectElement | null)?.value || '';
+                    const role = (document.getElementById('gm_char_role') as HTMLInputElement | null)?.value || '';
+                    const traitsStr = (document.getElementById('gm_char_traits') as HTMLInputElement | null)?.value || '';
+                    const honesty = (document.getElementById('gm_char_honesty') as HTMLSelectElement | null)?.value || 'honest';
+                    const traits = traitsStr.split(',').map(s => s.trim()).filter(Boolean);
+                    try {
+                      await fetch(`${API_URL}/rooms/${myRoom}/characters/${encodeURIComponent(name)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role, personality: { traits, honesty } }) });
+                      await fetchCharacters();
+                      showToast('Character updated', 'ok');
+                    } catch (e) { showToast('Update failed', 'error'); }
+                  }} style={{ backgroundColor: '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Save Character</button>
+                </div>
+              </div>
+
               {/* Evidence Items */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
