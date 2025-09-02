@@ -1071,6 +1071,35 @@ function App() {
           </div>
         )}
 
+        {/* Accusation Phase UI */}
+        {myRoom && caseInfo?.status === 'accusation' && (
+          <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: '0.5rem' }}>⚖️ Accuse the Culprit</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr auto', gap: '0.5rem', alignItems: 'center' }}>
+              <select id="accuse_name" style={{ backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem', padding: '0.5rem' }}>
+                {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                  <option key={c.name} value={c.name}>{c.name}</option>
+                ))}
+              </select>
+              <input id="accuse_reason" placeholder="Brief rationale…" style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+              <button onClick={async () => {
+                const suspect = (document.getElementById('accuse_name') as HTMLSelectElement | null)?.value || '';
+                const rationale = (document.getElementById('accuse_reason') as HTMLInputElement | null)?.value || '';
+                try {
+                  const res = await fetch(`${API_URL}/rooms/${myRoom}/accuse`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ suspect, rationale }) });
+                  const data = await res.json();
+                  if (data?.ok) {
+                    showToast(data?.verdict ? `Case closed (${data.verdict})` : 'Case closed', 'ok');
+                    await fetchCase();
+                  } else {
+                    showToast('Accusation failed', 'error');
+                  }
+                } catch { showToast('Accusation failed', 'error'); }
+              }} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Accuse</button>
+            </div>
+          </div>
+        )}
+
         {/* Detective quick controls: open modals */}
         {myRoom && (
           <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem', marginTop: '1rem' }}>
