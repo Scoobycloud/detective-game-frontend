@@ -83,6 +83,9 @@ function App() {
     timeline: '',
     alibis: ''
   });
+  // GM table editors (Evidence, Clues)
+  const [evidenceRows, setEvidenceRows] = useState<Array<{ title: string; type: string; location: string; notes: string; character?: string }>>([]);
+  const [clueRows, setClueRows] = useState<Array<{ text: string; type: 'IMPORTANT' | 'CONTRADICTION' | ''; source: string; character?: string }>>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   // DISABLED: Media preview state temporarily removed
   // const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
@@ -510,12 +513,21 @@ function App() {
       addMessage(`🎭 Creating game for room: ${myRoom}...`);
       addMessage(`🔗 Using API URL: ${API_URL}`);
 
+      // Serialize table rows into pipe-delimited strings if rows exist
+      const serializeEvidence = (rows: typeof evidenceRows) => rows.map(r => [r.title, r.type, r.location, r.notes, r.character || ''].join(' | ')).join('\n');
+      const serializeClues = (rows: typeof clueRows) => rows.map(r => [r.text, (r.type || '').toString(), r.source, r.character || ''].join(' | ')).join('\n');
+      const payload = {
+        ...gameData,
+        evidence: evidenceRows.length ? serializeEvidence(evidenceRows) : gameData.evidence,
+        clues: clueRows.length ? serializeClues(clueRows) : gameData.clues,
+      };
+
       const res = await fetch(`${API_URL}/rooms/${myRoom}/create-structured-game`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(gameData),
+        body: JSON.stringify(payload),
         signal: controller.signal
       });
 
@@ -563,6 +575,8 @@ function App() {
         timeline: '',
         alibis: ''
       });
+      setEvidenceRows([]);
+      setClueRows([]);
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -932,52 +946,122 @@ function App() {
                   />
                 </div>
 
-                {/* Evidence Items */}
+                {/* Evidence Items (Table) */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
-                    🧾 Evidence Items
-                  </label>
-                  <textarea
-                    value={gameData.evidence}
-                    onChange={(e) => setGameData({...gameData, evidence: e.target.value})}
-                    placeholder={"List evidence items, one per line. Format: Title | Type | Location | Notes | Linked Character (optional)\n\nExamples:\nLetter Opener | item | Mrs. Bellamy's Purse | Murder weapon, planted as red herring | Mrs. Bellamy\nFinancial Ledger | document | Study Desk | Shows large unpaid debts | Mr. Holloway\nCigar Stub | item | Study Ashtray | Expensive Cuban, victim didn't smoke | Dr. Adrian Blackwood"}
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      padding: '0.75rem',
-                      backgroundColor: '#111827',
-                      border: '1px solid #374151',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem',
-                      resize: 'vertical',
-                      fontFamily: 'inherit'
-                    }}
-                  />
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>🧾 Evidence Items</label>
+                  <div style={{ overflowX: 'auto', border: '1px solid #374151', borderRadius: '0.375rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#0f172a' }}>
+                          {['Title','Type','Location','Notes','Linked Character',''].map(h => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.5rem', fontSize: '0.75rem', color: '#9ca3af', borderBottom: '1px solid #374151' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {evidenceRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td style={{ padding: '0.25rem' }}><input value={row.title} onChange={(e) => {
+                              const v = e.target.value; setEvidenceRows(r => r.map((x,i) => i===idx ? { ...x, title: v } : x));
+                            }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}>
+                              <select value={row.type} onChange={(e) => {
+                                const v = e.target.value; setEvidenceRows(r => r.map((x,i) => i===idx ? { ...x, type: v } : x));
+                              }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
+                                {['item','document','image','video'].map(t => <option key={t} value={t}>{t}</option>)}
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.location} onChange={(e) => {
+                              const v = e.target.value; setEvidenceRows(r => r.map((x,i) => i===idx ? { ...x, location: v } : x));
+                            }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.notes} onChange={(e) => {
+                              const v = e.target.value; setEvidenceRows(r => r.map((x,i) => i===idx ? { ...x, notes: v } : x));
+                            }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}>
+                              <select value={row.character || ''} onChange={(e) => {
+                                const v = e.target.value; setEvidenceRows(r => r.map((x,i) => i===idx ? { ...x, character: v || undefined } : x));
+                              }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
+                                <option value="">(none)</option>
+                                {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                                  <option key={c.name} value={c.name}>{c.name}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.25rem', width: '2rem' }}>
+                              <button onClick={() => setEvidenceRows(r => r.filter((_,i) => i!==idx))} style={{ backgroundColor: '#7c2d12', color: 'white', border: 'none', borderRadius: '0.25rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>✕</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => setEvidenceRows(r => [...r, { title: '', type: 'item', location: '', notes: '', character: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
+                    <button onClick={() => {
+                      // seed from textarea if present
+                      if (!gameData.evidence.trim()) return;
+                      const rows = gameData.evidence.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=4).map(parts => ({ title: parts[0], type: parts[1] || 'item', location: parts[2] || '', notes: parts[3] || '', character: parts[4] || '' }));
+                      setEvidenceRows(rows);
+                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
+                  </div>
                 </div>
 
-                {/* Clues */}
+                {/* Clues (Table) */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
-                    🧩 Clues
-                  </label>
-                  <textarea
-                    value={gameData.clues}
-                    onChange={(e) => setGameData({...gameData, clues: e.target.value})}
-                    placeholder={"List clues, one per line. Format: Clue Text | Type | Source | Linked Character (optional)\n\nTypes: IMPORTANT (key facts) or CONTRADICTION (conflicting statements)\n\nExamples:\nThe window was broken from inside, not outside | IMPORTANT | Forensic Report | Tommy the Janitor\nButler claims he was reading, but book was dusty | CONTRADICTION | Detective Observation | Mr. Holloway"}
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      padding: '0.75rem',
-                      backgroundColor: '#111827',
-                      border: '1px solid #374151',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem',
-                      resize: 'vertical',
-                      fontFamily: 'inherit'
-                    }}
-                  />
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>🧩 Clues</label>
+                  <div style={{ overflowX: 'auto', border: '1px solid #374151', borderRadius: '0.375rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#0f172a' }}>
+                          {['Text','Type','Source','Linked Character',''].map(h => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.5rem', fontSize: '0.75rem', color: '#9ca3af', borderBottom: '1px solid #374151' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {clueRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td style={{ padding: '0.25rem' }}><input value={row.text} onChange={(e) => {
+                              const v = e.target.value; setClueRows(r => r.map((x,i) => i===idx ? { ...x, text: v } : x));
+                            }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}>
+                              <select value={row.type || ''} onChange={(e) => {
+                                const v = e.target.value as any; setClueRows(r => r.map((x,i) => i===idx ? { ...x, type: v } : x));
+                              }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
+                                <option value="">(choose)</option>
+                                <option value="IMPORTANT">IMPORTANT</option>
+                                <option value="CONTRADICTION">CONTRADICTION</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.source} onChange={(e) => {
+                              const v = e.target.value; setClueRows(r => r.map((x,i) => i===idx ? { ...x, source: v } : x));
+                            }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}>
+                              <select value={row.character || ''} onChange={(e) => {
+                                const v = e.target.value; setClueRows(r => r.map((x,i) => i===idx ? { ...x, character: v || undefined } : x));
+                              }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
+                                <option value="">(none)</option>
+                                {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                                  <option key={c.name} value={c.name}>{c.name}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.25rem', width: '2rem' }}>
+                              <button onClick={() => setClueRows(r => r.filter((_,i) => i!==idx))} style={{ backgroundColor: '#7c2d12', color: 'white', border: 'none', borderRadius: '0.25rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>✕</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => setClueRows(r => [...r, { text: '', type: 'IMPORTANT', source: '', character: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
+                    <button onClick={() => {
+                      if (!gameData.clues.trim()) return;
+                      const rows = gameData.clues.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=3).map(parts => ({ text: parts[0], type: (parts[1] || 'IMPORTANT').toUpperCase() as any, source: parts[2] || '', character: parts[3] || '' }));
+                      setClueRows(rows);
+                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
+                  </div>
                 </div>
 
                 {/* Timeline */}
