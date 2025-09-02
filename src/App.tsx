@@ -103,6 +103,7 @@ function App() {
   });
   const musicRef = useRef<HTMLAudioElement | null>(null);
   const musicStartedRef = useRef<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -150,6 +151,14 @@ function App() {
       setUserEmail(user?.email ?? null);
       if (!user) {
         goToLobby();
+        setIsAdmin(false);
+      } else {
+        try {
+          const idToken = await user.getIdToken();
+          const res = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${idToken}` } });
+          const data = await res.json();
+          setIsAdmin(Boolean(data?.is_admin));
+        } catch { setIsAdmin(false); }
       }
     });
     return () => unsub();
@@ -772,10 +781,19 @@ function App() {
                   <option key={r.code} value={r.code}>{r.name ? `${r.name} (${r.code})` : r.code}</option>
                 ))}
               </select>
-              <button
-                onClick={() => { setShowCreate(true); void ensureMusicStarted(); }}
-                style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
-              >Create New Room</button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button
+                  onClick={() => { setShowCreate(true); void ensureMusicStarted(); }}
+                  style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
+                >Create New Room</button>
+                {isAdmin && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
+                    style={{ backgroundColor: '#7c3aed', color: 'white', border: '1px solid #6d28d9', padding: '0.75rem 1.0rem', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 700 }}
+                    title="Game Master"
+                  >🎭 Game Master</button>
+                )}
+              </div>
             </div>
             {/* Removed redundant selected room label; dropdown already shows selection */}
           </div>
@@ -1107,7 +1125,7 @@ function App() {
               <button onClick={() => { void fetchTimeline(); setShowTimelineModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🕰️ Timeline</button>
               <button onClick={() => { void fetchAlibis(); void fetchCredibility(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
               <button onClick={() => { if (!charactersDb.length) { void fetchCharacters(); } const first = (charactersDb[0]?.name) || ''; setScopeCharacter(first); if (first) { void loadCharacterScope(first); } setShowScopeModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧠 Knowledge Scope</button>
-              <button onClick={() => setShowGameMasterPanel(true)} style={{ backgroundColor: '#7c3aed', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer', fontWeight: 'bold' }}>🎭 Game Master</button>
+              {/* GM button hidden in-game; available from lobby for admins only */}
               <select
                 value={(caseInfo?.status || 'open') as any}
                 onChange={async (e) => {
