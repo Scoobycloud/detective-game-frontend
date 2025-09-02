@@ -789,7 +789,7 @@ function App() {
                 {isAdmin && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
-                    style={{ backgroundColor: '#7c3aed', color: 'white', border: '1px solid #6d28d9', padding: '0.75rem 1.0rem', borderRadius: '0.5rem', cursor: 'pointer', fontWeight: 700 }}
+                    style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
                     title="Game Master"
                   >🎭 Game Master</button>
                 )}
@@ -889,6 +889,71 @@ function App() {
                     temp.on('disconnect', () => temp.close());
                   }} disabled={!nameValid} style={{ backgroundColor: !nameValid ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: !nameValid ? 'not-allowed' : 'pointer' }}>OK</button>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showGameMasterPanel && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
+            <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a855f7' }}>🎭 Game Master</h2>
+                <button
+                  onClick={() => setShowGameMasterPanel(false)}
+                  style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                    📖 Murder Mystery Story
+                  </label>
+                  <textarea
+                    value={gameData.narrative}
+                    onChange={(e) => setGameData({...gameData, narrative: e.target.value})}
+                    placeholder={"Write the complete murder mystery story. This will be stored as the game's narrative background."}
+                    style={{
+                      width: '100%',
+                      minHeight: '120px',
+                      padding: '0.75rem',
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '0.375rem',
+                      color: 'white',
+                      fontSize: '0.875rem',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  onClick={() => setShowGameMasterPanel(false)}
+                  style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.375rem', cursor: 'pointer' }}
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => createGameFromStructuredData()}
+                  disabled={!gameData.narrative.trim() || isGenerating}
+                  style={{
+                    backgroundColor: !gameData.narrative.trim() || isGenerating ? '#4b5563' : '#7c3aed',
+                    color: 'white',
+                    border: 'none',
+                    padding: '0.5rem 1rem',
+                    borderRadius: '0.375rem',
+                    cursor: !gameData.narrative.trim() || isGenerating ? 'not-allowed' : 'pointer',
+                    fontWeight: '600'
+                  }}
+                >
+                  {isGenerating ? '🎭 Creating...' : '🎭 Create Game'}
+                </button>
               </div>
             </div>
           </div>
