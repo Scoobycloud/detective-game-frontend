@@ -86,6 +86,9 @@ function App() {
   // GM table editors (Evidence, Clues)
   const [evidenceRows, setEvidenceRows] = useState<Array<{ title: string; type: string; location: string; notes: string; character?: string }>>([]);
   const [clueRows, setClueRows] = useState<Array<{ text: string; type: 'IMPORTANT' | 'CONTRADICTION' | ''; source: string; character?: string }>>([]);
+  // GM table editors (Timeline, Alibis)
+  const [timelineRows, setTimelineRows] = useState<Array<{ tstamp: string; phase: string; label: string; details: string }>>([]);
+  const [alibiRows, setAlibiRows] = useState<Array<{ character: string; timeframe: string; account: string; credibility: string }>>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   // DISABLED: Media preview state temporarily removed
   // const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
@@ -516,10 +519,14 @@ function App() {
       // Serialize table rows into pipe-delimited strings if rows exist
       const serializeEvidence = (rows: typeof evidenceRows) => rows.map(r => [r.title, r.type, r.location, r.notes, r.character || ''].join(' | ')).join('\n');
       const serializeClues = (rows: typeof clueRows) => rows.map(r => [r.text, (r.type || '').toString(), r.source, r.character || ''].join(' | ')).join('\n');
+      const serializeTimeline = (rows: typeof timelineRows) => rows.map(r => [r.tstamp, r.phase, r.label, r.details].join(' | ')).join('\n');
+      const serializeAlibis = (rows: typeof alibiRows) => rows.map(r => [r.character, r.timeframe, r.account, r.credibility].join(' | ')).join('\n');
       const payload = {
         ...gameData,
         evidence: evidenceRows.length ? serializeEvidence(evidenceRows) : gameData.evidence,
         clues: clueRows.length ? serializeClues(clueRows) : gameData.clues,
+        timeline: timelineRows.length ? serializeTimeline(timelineRows) : gameData.timeline,
+        alibis: alibiRows.length ? serializeAlibis(alibiRows) : gameData.alibis,
       };
 
       const res = await fetch(`${API_URL}/rooms/${myRoom}/create-structured-game`, {
@@ -577,6 +584,8 @@ function App() {
       });
       setEvidenceRows([]);
       setClueRows([]);
+      setTimelineRows([]);
+      setAlibiRows([]);
 
     } catch (error: any) {
       if (error.name === 'AbortError') {
@@ -1064,52 +1073,88 @@ function App() {
                   </div>
                 </div>
 
-                {/* Timeline */}
+                {/* Timeline (Table) */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
-                    🕰️ Timeline Events
-                  </label>
-                  <textarea
-                    value={gameData.timeline}
-                    onChange={(e) => setGameData({...gameData, timeline: e.target.value})}
-                    placeholder={"List timeline events, one per line. Format: Time | Phase | Label | Details\n\nPhases: pre_crime, during_crime, post_discovery\n\nExamples:\n2:00 PM | pre_crime | Public Argument | Holloway argues with victim over debts\n8:45 PM | during_crime | Suspicious Activity | Tommy sees shadow near kitchen door\n9:15 PM | post_discovery | Body Discovery | Housekeeper finds victim"}
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      padding: '0.75rem',
-                      backgroundColor: '#111827',
-                      border: '1px solid #374151',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem',
-                      resize: 'vertical',
-                      fontFamily: 'inherit'
-                    }}
-                  />
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>🕰️ Timeline Events</label>
+                  <div style={{ overflowX: 'auto', border: '1px solid #374151', borderRadius: '0.375rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#0f172a' }}>
+                          {['Time','Phase','Label','Details',''].map(h => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.5rem', fontSize: '0.75rem', color: '#9ca3af', borderBottom: '1px solid #374151' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {timelineRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td style={{ padding: '0.25rem' }}><input value={row.tstamp} onChange={(e) => setTimelineRows(r => r.map((x,i) => i===idx ? { ...x, tstamp: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}>
+                              <select value={row.phase} onChange={(e) => setTimelineRows(r => r.map((x,i) => i===idx ? { ...x, phase: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
+                                {['pre_crime','during_crime','post_discovery'].map(p => <option key={p} value={p}>{p}</option>)}
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.label} onChange={(e) => setTimelineRows(r => r.map((x,i) => i===idx ? { ...x, label: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.details} onChange={(e) => setTimelineRows(r => r.map((x,i) => i===idx ? { ...x, details: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem', width: '2rem' }}>
+                              <button onClick={() => setTimelineRows(r => r.filter((_,i) => i!==idx))} style={{ backgroundColor: '#7c2d12', color: 'white', border: 'none', borderRadius: '0.25rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>✕</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => setTimelineRows(r => [...r, { tstamp: '', phase: 'pre_crime', label: '', details: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
+                    <button onClick={() => {
+                      if (!gameData.timeline.trim()) return;
+                      const rows = gameData.timeline.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=4).map(parts => ({ tstamp: parts[0], phase: parts[1], label: parts[2], details: parts[3] }));
+                      setTimelineRows(rows);
+                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
+                  </div>
                 </div>
 
-                {/* Alibis */}
+                {/* Alibis (Table) */}
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
-                    🧭 Character Alibis
-                  </label>
-                  <textarea
-                    value={gameData.alibis}
-                    onChange={(e) => setGameData({...gameData, alibis: e.target.value})}
-                    placeholder={"List character alibis, one per line. Format: Character | Timeframe | Account | Credibility (0-100)\n\nExamples:\nMrs. Bellamy | 8:00-9:30 PM | Claims to visit sister in next village | 60\nMr. Holloway | 8:00-10:00 PM | Says he was home reading by fire, wife confirms shakily | 45\nDr. Blackwood | 8:30-9:15 PM | Lecture ended at 8:30, whereabouts unknown after | 25"}
-                    style={{
-                      width: '100%',
-                      minHeight: '100px',
-                      padding: '0.75rem',
-                      backgroundColor: '#111827',
-                      border: '1px solid #374151',
-                      borderRadius: '0.375rem',
-                      color: 'white',
-                      fontSize: '0.875rem',
-                      resize: 'vertical',
-                      fontFamily: 'inherit'
-                    }}
-                  />
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>🧭 Character Alibis</label>
+                  <div style={{ overflowX: 'auto', border: '1px solid #374151', borderRadius: '0.375rem' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#0f172a' }}>
+                          {['Character','Timeframe','Account','Credibility',''].map(h => (
+                            <th key={h} style={{ textAlign: 'left', padding: '0.5rem', fontSize: '0.75rem', color: '#9ca3af', borderBottom: '1px solid #374151' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {alibiRows.map((row, idx) => (
+                          <tr key={idx}>
+                            <td style={{ padding: '0.25rem' }}>
+                              <select value={row.character} onChange={(e) => setAlibiRows(r => r.map((x,i) => i===idx ? { ...x, character: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
+                                {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                                  <option key={c.name} value={c.name}>{c.name}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.timeframe} onChange={(e) => setAlibiRows(r => r.map((x,i) => i===idx ? { ...x, timeframe: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem' }}><input value={row.account} onChange={(e) => setAlibiRows(r => r.map((x,i) => i===idx ? { ...x, account: e.target.value } : x))} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem', width: '9rem' }}><input value={row.credibility} onChange={(e) => setAlibiRows(r => r.map((x,i) => i===idx ? { ...x, credibility: e.target.value } : x))} placeholder="0-100" style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
+                            <td style={{ padding: '0.25rem', width: '2rem' }}>
+                              <button onClick={() => setAlibiRows(r => r.filter((_,i) => i!==idx))} style={{ backgroundColor: '#7c2d12', color: 'white', border: 'none', borderRadius: '0.25rem', padding: '0.25rem 0.5rem', cursor: 'pointer' }}>✕</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                    <button onClick={() => setAlibiRows(r => [...r, { character: (charactersDb[0]?.name) || '', timeframe: '', account: '', credibility: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
+                    <button onClick={() => {
+                      if (!gameData.alibis.trim()) return;
+                      const rows = gameData.alibis.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=4).map(parts => ({ character: parts[0], timeframe: parts[1], account: parts[2], credibility: parts[3] }));
+                      setAlibiRows(rows);
+                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
+                  </div>
                 </div>
               </div>
 
