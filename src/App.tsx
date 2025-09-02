@@ -908,6 +908,7 @@ function App() {
               </div>
 
               <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
+                {/* Narrative Story */}
                 <div>
                   <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
                     📖 Murder Mystery Story
@@ -915,10 +916,106 @@ function App() {
                   <textarea
                     value={gameData.narrative}
                     onChange={(e) => setGameData({...gameData, narrative: e.target.value})}
-                    placeholder={"Write the complete murder mystery story. This will be stored as the game's narrative background."}
+                    placeholder={"Write the complete murder mystery story. This will be stored as the game's narrative background.\n\nExample: 'Dr. Blackwood was found murdered in his study at 9:15 PM. He was a respected but arrogant physician who had made many enemies...'"}
                     style={{
                       width: '100%',
                       minHeight: '120px',
+                      padding: '0.75rem',
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '0.375rem',
+                      color: 'white',
+                      fontSize: '0.875rem',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+
+                {/* Evidence Items */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                    🧾 Evidence Items
+                  </label>
+                  <textarea
+                    value={gameData.evidence}
+                    onChange={(e) => setGameData({...gameData, evidence: e.target.value})}
+                    placeholder={"List evidence items, one per line. Format: Title | Type | Location | Notes | Linked Character (optional)\n\nExamples:\nLetter Opener | item | Mrs. Bellamy's Purse | Murder weapon, planted as red herring | Mrs. Bellamy\nFinancial Ledger | document | Study Desk | Shows large unpaid debts | Mr. Holloway\nCigar Stub | item | Study Ashtray | Expensive Cuban, victim didn't smoke | Dr. Adrian Blackwood"}
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '0.75rem',
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '0.375rem',
+                      color: 'white',
+                      fontSize: '0.875rem',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+
+                {/* Clues */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                    🧩 Clues
+                  </label>
+                  <textarea
+                    value={gameData.clues}
+                    onChange={(e) => setGameData({...gameData, clues: e.target.value})}
+                    placeholder={"List clues, one per line. Format: Clue Text | Type | Source | Linked Character (optional)\n\nTypes: IMPORTANT (key facts) or CONTRADICTION (conflicting statements)\n\nExamples:\nThe window was broken from inside, not outside | IMPORTANT | Forensic Report | Tommy the Janitor\nButler claims he was reading, but book was dusty | CONTRADICTION | Detective Observation | Mr. Holloway"}
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '0.75rem',
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '0.375rem',
+                      color: 'white',
+                      fontSize: '0.875rem',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+
+                {/* Timeline */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                    🕰️ Timeline Events
+                  </label>
+                  <textarea
+                    value={gameData.timeline}
+                    onChange={(e) => setGameData({...gameData, timeline: e.target.value})}
+                    placeholder={"List timeline events, one per line. Format: Time | Phase | Label | Details\n\nPhases: pre_crime, during_crime, post_discovery\n\nExamples:\n2:00 PM | pre_crime | Public Argument | Holloway argues with victim over debts\n8:45 PM | during_crime | Suspicious Activity | Tommy sees shadow near kitchen door\n9:15 PM | post_discovery | Body Discovery | Housekeeper finds victim"}
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
+                      padding: '0.75rem',
+                      backgroundColor: '#111827',
+                      border: '1px solid #374151',
+                      borderRadius: '0.375rem',
+                      color: 'white',
+                      fontSize: '0.875rem',
+                      resize: 'vertical',
+                      fontFamily: 'inherit'
+                    }}
+                  />
+                </div>
+
+                {/* Alibis */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                    🧭 Character Alibis
+                  </label>
+                  <textarea
+                    value={gameData.alibis}
+                    onChange={(e) => setGameData({...gameData, alibis: e.target.value})}
+                    placeholder={"List character alibis, one per line. Format: Character | Timeframe | Account | Credibility (0-100)\n\nExamples:\nMrs. Bellamy | 8:00-9:30 PM | Claims to visit sister in next village | 60\nMr. Holloway | 8:00-10:00 PM | Says he was home reading by fire, wife confirms shakily | 45\nDr. Blackwood | 8:30-9:15 PM | Lecture ended at 8:30, whereabouts unknown after | 25"}
+                    style={{
+                      width: '100%',
+                      minHeight: '100px',
                       padding: '0.75rem',
                       backgroundColor: '#111827',
                       border: '1px solid #374151',
@@ -937,7 +1034,7 @@ function App() {
                   onClick={() => setShowGameMasterPanel(false)}
                   style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.375rem', cursor: 'pointer' }}
                 >
-                  Close
+                  Cancel
                 </button>
                 <button
                   onClick={() => createGameFromStructuredData()}
