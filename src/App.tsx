@@ -1004,14 +1004,8 @@ function App() {
                       </tbody>
                     </table>
                   </div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ marginTop: '0.5rem' }}>
                     <button onClick={() => setEvidenceRows(r => [...r, { title: '', type: 'item', location: '', notes: '', character: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
-                    <button onClick={() => {
-                      // seed from textarea if present
-                      if (!gameData.evidence.trim()) return;
-                      const rows = gameData.evidence.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=4).map(parts => ({ title: parts[0], type: parts[1] || 'item', location: parts[2] || '', notes: parts[3] || '', character: parts[4] || '' }));
-                      setEvidenceRows(rows);
-                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
                   </div>
                 </div>
 
@@ -1063,13 +1057,8 @@ function App() {
                       </tbody>
                     </table>
                   </div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ marginTop: '0.5rem' }}>
                     <button onClick={() => setClueRows(r => [...r, { text: '', type: 'IMPORTANT', source: '', character: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
-                    <button onClick={() => {
-                      if (!gameData.clues.trim()) return;
-                      const rows = gameData.clues.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=3).map(parts => ({ text: parts[0], type: (parts[1] || 'IMPORTANT').toUpperCase() as any, source: parts[2] || '', character: parts[3] || '' }));
-                      setClueRows(rows);
-                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
                   </div>
                 </div>
 
@@ -1104,13 +1093,8 @@ function App() {
                       </tbody>
                     </table>
                   </div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ marginTop: '0.5rem' }}>
                     <button onClick={() => setTimelineRows(r => [...r, { tstamp: '', phase: 'pre_crime', label: '', details: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
-                    <button onClick={() => {
-                      if (!gameData.timeline.trim()) return;
-                      const rows = gameData.timeline.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=4).map(parts => ({ tstamp: parts[0], phase: parts[1], label: parts[2], details: parts[3] }));
-                      setTimelineRows(rows);
-                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
                   </div>
                 </div>
 
@@ -1147,13 +1131,8 @@ function App() {
                       </tbody>
                     </table>
                   </div>
-                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ marginTop: '0.5rem' }}>
                     <button onClick={() => setAlibiRows(r => [...r, { character: (charactersDb[0]?.name) || '', timeframe: '', account: '', credibility: '' }])} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Add Row</button>
-                    <button onClick={() => {
-                      if (!gameData.alibis.trim()) return;
-                      const rows = gameData.alibis.split('\n').map(l => l.split('|').map(p => p.trim())).filter(parts => parts.length>=4).map(parts => ({ character: parts[0], timeframe: parts[1], account: parts[2], credibility: parts[3] }));
-                      setAlibiRows(rows);
-                    }} style={{ backgroundColor: '#0e7490', color: 'white', border: 'none', padding: '0.35rem 0.6rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Import from Text</button>
                   </div>
                 </div>
               </div>
