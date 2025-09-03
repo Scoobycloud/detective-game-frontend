@@ -146,3 +146,18 @@ video {
   pointer-events: auto !important;
   cursor: pointer !important;
 }
+
+/* Accessible focus styles */
+button:focus-visible, select:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid #fbbf24; /* amber */
+  outline-offset: 2px;
+}
+
+/* Mobile spacing tweaks */
+@media (max-width: 480px) {
+  .mobile-stack {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
