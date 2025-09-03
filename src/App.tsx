@@ -1047,7 +1047,7 @@ function App() {
                               const v = e.target.value; setClueRows(r => r.map((x,i) => i===idx ? { ...x, text: v } : x));
                             }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#111827', color: 'white', border: '1px solid #374151', borderRadius: '0.25rem' }} /></td>
                             <td style={{ padding: '0.25rem' }}>
-                              <select value={row.type || ''} onChange={(e) => {
+                              <select aria-label="Clue type" value={row.type || ''} onChange={(e) => {
                                 const v = e.target.value as any; setClueRows(r => r.map((x,i) => i===idx ? { ...x, type: v } : x));
                               }} style={{ width: '100%', padding: '0.35rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.25rem' }}>
                                 <option value="">(choose)</option>
@@ -1336,7 +1336,7 @@ function App() {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' || (e.key === 'Enter' && (e.ctrlKey || (e as any).metaKey))) {
                     askQuestion();
                   }
                 }}
@@ -1346,7 +1346,8 @@ function App() {
               <button
                 onClick={askQuestion}
                 disabled={!question.trim() || !selectedCharacter || !connected}
-                style={{ backgroundColor: (!question.trim() || !selectedCharacter || !connected) ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
+                title={!connected ? 'Not connected' : (!selectedCharacter ? 'Pick a suspect' : (!question.trim() ? 'Type a question' : 'Ask'))}
+                style={{ backgroundColor: (!question.trim() || !selectedCharacter || !connected) ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: (!question.trim() || !selectedCharacter || !connected) ? 'not-allowed' : 'pointer' }}
               >
                 Ask
               </button>
