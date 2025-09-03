@@ -111,6 +111,24 @@ function App() {
   const musicStartedRef = useRef<boolean>(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
+  // Global ESC to close topmost modal
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      // Close in order of priority (topmost first)
+      if (showGameMasterPanel) { setShowGameMasterPanel(false); return; }
+      if (showProfile) { setShowProfile(false); setProfile(null); setRecordText(''); return; }
+      if (showEvidenceModal) { setShowEvidenceModal(false); return; }
+      if (showCluesModal) { setShowCluesModal(false); return; }
+      if (showTimelineModal) { setShowTimelineModal(false); return; }
+      if (showAlibisModal) { setShowAlibisModal(false); return; }
+      if (showCreate) { setShowCreate(false); return; }
+      if (showHelp) { setShowHelp(false); return; }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [showGameMasterPanel, showProfile, showEvidenceModal, showCluesModal, showTimelineModal, showAlibisModal, showCreate, showHelp]);
+
   const goToLobby = () => {
     setGameState('lobby');
     setRole(null);
@@ -812,6 +830,7 @@ function App() {
                 {isAdmin && (
                   <button
                     onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
+                    aria-label="Open Game Master"
                     style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
                     title="Game Master"
                   >🎭 Game Master</button>
