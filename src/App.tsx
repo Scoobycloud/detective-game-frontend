@@ -84,6 +84,7 @@ function App() {
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
   const [knowledgeText, setKnowledgeText] = useState<string>('{}');
   const [knowledgeBusy, setKnowledgeBusy] = useState<boolean>(false);
+  const [knowledgeError, setKnowledgeError] = useState<string | null>(null);
   const [gameData, setGameData] = useState({
     narrative: '',
     clues: '',
@@ -142,6 +143,7 @@ function App() {
   const loadKnowledge = useCallback(async () => {
     try {
       setKnowledgeBusy(true);
+      setKnowledgeError(null);
       const token = await auth.currentUser?.getIdToken();
       const res = await fetch(`${API_URL}/admin/knowledge`, { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error(`Load failed (${res.status})`);
@@ -149,7 +151,9 @@ function App() {
       setKnowledgeText(JSON.stringify(data, null, 2));
       showToast('Knowledge loaded', 'ok');
     } catch (e: any) {
-      showToast(e?.message || String(e), 'error');
+      const msg = e?.message || String(e);
+      setKnowledgeError(msg);
+      showToast(msg, 'error');
     } finally {
       setKnowledgeBusy(false);
     }
@@ -158,6 +162,7 @@ function App() {
   const saveKnowledge = useCallback(async () => {
     try {
       setKnowledgeBusy(true);
+      setKnowledgeError(null);
       let parsed: any;
       try { parsed = JSON.parse(knowledgeText); } catch { throw new Error('Invalid JSON'); }
       const token = await auth.currentUser?.getIdToken();
@@ -173,7 +178,9 @@ function App() {
       }
       showToast('Knowledge saved', 'ok');
     } catch (e: any) {
-      showToast(e?.message || String(e), 'error');
+      const msg = e?.message || String(e);
+      setKnowledgeError(msg);
+      showToast(msg, 'error');
     } finally {
       setKnowledgeBusy(false);
     }
@@ -184,6 +191,7 @@ function App() {
       showToast('Admin access required', 'error');
       return;
     }
+    setKnowledgeError(null);
     setShowKnowledgeModal(true);
     void loadKnowledge();
   }, [isAdmin, loadKnowledge, showToast]);
@@ -971,6 +979,11 @@ function App() {
                   {knowledgeBusy ? 'Saving…' : 'Save'}
                 </button>
               </div>
+              {knowledgeError && (
+                <div style={{ backgroundColor: '#7f1d1d', color: 'white', padding: '0.5rem', borderRadius: '0.375rem', marginBottom: '0.5rem' }}>
+                  ❌ {knowledgeError}
+                </div>
+              )}
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>knowledge.json</label>
                 <textarea value={knowledgeText} onChange={(e) => setKnowledgeText(e.target.value)} spellCheck={false} style={{ width: '100%', minHeight: '24rem', backgroundColor: '#1f2937', color: '#e5e7eb', border: '1px solid #4b5563', borderRadius: '0.375rem', padding: '0.75rem', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace', fontSize: '0.875rem' }} />
