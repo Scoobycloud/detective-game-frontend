@@ -153,6 +153,8 @@ function App() {
     } catch (e: any) {
       const msg = e?.message || String(e);
       setKnowledgeError(msg);
+      setKnowledgeText(`// ${msg}`);
+      console.error('Knowledge load error:', msg);
       showToast(msg, 'error');
     } finally {
       setKnowledgeBusy(false);
@@ -978,6 +980,9 @@ function App() {
                 <button onClick={() => void saveKnowledge()} disabled={knowledgeBusy} style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>
                   {knowledgeBusy ? 'Saving…' : 'Save'}
                 </button>
+              </div>
+              <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                API: {API_URL} · Admin: {isAdmin ? 'yes' : 'no'}
               </div>
               {knowledgeError && (
                 <div style={{ backgroundColor: '#7f1d1d', color: 'white', padding: '0.5rem', borderRadius: '0.375rem', marginBottom: '0.5rem' }}>
