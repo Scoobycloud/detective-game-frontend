@@ -4,6 +4,10 @@ import './App.css';
 import { auth, provider, signInWithPopup, onAuthStateChanged, signOut, signInWithRedirect, getRedirectResult } from './firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
+// Backend URL
+const API_URL = process.env.REACT_APP_API_URL || 'https://detective-game-online-z4oe.onrender.com';
+console.log('🔧 API_URL:', API_URL);
+
 // Real-time Detective Game Interface with Socket.IO
 function App() {
   const [role, setRole] = useState<'detective' | 'murderer' | null>(null);
@@ -20,7 +24,7 @@ function App() {
   const [question, setQuestion] = useState('');
   const [selectedCharacter, setSelectedCharacter] = useState('');
   const [connected, setConnected] = useState(false);
-
+  
   // Murderer-specific states
   const [controlledCharacter, setControlledCharacter] = useState('');
   const [characterLocked, setCharacterLocked] = useState(false);
@@ -76,6 +80,10 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
+  // Admin knowledge editor
+  const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
+  const [knowledgeText, setKnowledgeText] = useState<string>('{}');
+  const [knowledgeBusy, setKnowledgeBusy] = useState<boolean>(false);
   const [gameData, setGameData] = useState({
     narrative: '',
     clues: '',
@@ -116,6 +124,7 @@ function App() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       // Close in order of priority (topmost first)
+      if (showKnowledgeModal) { setShowKnowledgeModal(false); return; }
       if (showGameMasterPanel) { setShowGameMasterPanel(false); return; }
       if (showProfile) { setShowProfile(false); setProfile(null); setRecordText(''); return; }
       if (showEvidenceModal) { setShowEvidenceModal(false); return; }
@@ -127,7 +136,48 @@ function App() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [showGameMasterPanel, showProfile, showEvidenceModal, showCluesModal, showTimelineModal, showAlibisModal, showCreate, showHelp]);
+  }, [showKnowledgeModal, showGameMasterPanel, showProfile, showEvidenceModal, showCluesModal, showTimelineModal, showAlibisModal, showCreate, showHelp]);
+
+  // Admin knowledge helpers
+  const loadKnowledge = useCallback(async () => {
+    try {
+      setKnowledgeBusy(true);
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`${API_URL}/admin/knowledge`, { headers: { Authorization: `Bearer ${token}` } });
+      if (!res.ok) throw new Error(`Load failed (${res.status})`);
+      const data = await res.json();
+      setKnowledgeText(JSON.stringify(data, null, 2));
+      showToast('Knowledge loaded', 'ok');
+    } catch (e: any) {
+      showToast(e?.message || String(e), 'error');
+    } finally {
+      setKnowledgeBusy(false);
+    }
+  }, [API_URL]);
+
+  const saveKnowledge = useCallback(async () => {
+    try {
+      setKnowledgeBusy(true);
+      let parsed: any;
+      try { parsed = JSON.parse(knowledgeText); } catch { throw new Error('Invalid JSON'); }
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`${API_URL}/admin/knowledge`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(parsed)
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({} as any));
+        const msg = body?.detail || body?.error || `Save failed (${res.status})`;
+        throw new Error(msg);
+      }
+      showToast('Knowledge saved', 'ok');
+    } catch (e: any) {
+      showToast(e?.message || String(e), 'error');
+    } finally {
+      setKnowledgeBusy(false);
+    }
+  }, [API_URL, knowledgeText]);
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -150,7 +200,7 @@ function App() {
 
   const characters = [
     'Mrs. Bellamy',
-    'Mr. Holloway',
+    'Mr. Holloway', 
     'Tommy the Janitor',
     'Dr. Adrian Blackwood'
   ];
@@ -163,8 +213,7 @@ function App() {
     'Dr. Adrian Blackwood': '/images/characters/dr_adrian_blackwood.png',
   };
 
-  const API_URL = process.env.REACT_APP_API_URL || 'https://detective-game-online-z4oe.onrender.com';
-  console.log('🔧 API_URL:', API_URL);
+  // API_URL defined at module scope
 
   useEffect(() => {
     controlledRef.current = controlledCharacter;
@@ -287,7 +336,7 @@ function App() {
     // Initialize Socket.IO connection
     if (role && myRoom && !socketRef.current) {
       addMessage('🔗 Connecting to game server...');
-
+      
       socketRef.current = io(API_URL, {
         transports: ['websocket']
       });
@@ -297,7 +346,7 @@ function App() {
       socket.on('connect', async () => {
         setConnected(true);
         addMessage('✅ Connected to game server!');
-
+        
         // Join as the selected role in specified room
         const idToken = await auth.currentUser?.getIdToken();
         socket.emit('join_role', { role, room: myRoom, idToken });
@@ -337,9 +386,9 @@ function App() {
         if (role === 'murderer') {
           const current = controlledRef.current;
           if (!current || current === character) {
-            addMessage(`❓ Detective asks ${character}: "${question}"`);
-            setPendingQuestion(question);
-            setPendingCorrelationId(correlation_id);
+          addMessage(`❓ Detective asks ${character}: "${question}"`);
+          setPendingQuestion(question);
+          setPendingCorrelationId(correlation_id);
             // send debug ack so server can confirm delivery
             socket.emit('murderer_ack', { correlation_id });
           } else {
@@ -392,9 +441,9 @@ function App() {
 
   const lockCharacter = () => {
     if (!controlledCharacter || !socketRef.current) return;
-
+    
     addMessage(`🔒 You are now controlling ${controlledCharacter} for the rest of the game.`);
-
+    
     // Tell the server which character is now human-controlled
     socketRef.current.emit('set_human_character', { character: controlledCharacter });
     addMessage('🎭 When the detective asks this character questions, you will respond.');
@@ -405,13 +454,13 @@ function App() {
 
     const questionText = `🕵️ You asked ${selectedCharacter}: ${question}`;
     addMessage(questionText);
-
+    
     // Send question via Socket.IO
     socketRef.current.emit('ask', {
       character: selectedCharacter,
       question: question
     });
-
+    
     setQuestion('');
   };
 
@@ -768,7 +817,7 @@ function App() {
     });
 
     addMessage(`💬 You (as ${controlledCharacter}): ${answerText}`);
-
+    
     // Clear pending question
     setPendingQuestion('');
     setPendingCorrelationId('');
@@ -823,7 +872,7 @@ function App() {
                 ))}
               </select>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
+            <button 
                   onClick={() => { setShowCreate(true); void ensureMusicStarted(); }}
                   style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
                 >Create New Room</button>
@@ -847,8 +896,8 @@ function App() {
             >
               🕵️ Play as Detective
             </button>
-
-            <button
+            
+            <button 
               onClick={(e) => { e.stopPropagation(); void ensureMusicStarted(); joinAsMurderer(); }}
               style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '600', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em' }}
             >
@@ -861,20 +910,9 @@ function App() {
 
 
           <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
-            {userEmail ? (
-              <>
-                <span>Signed in as {userEmail}</span>
-                <span style={{ color: '#4b5563' }}>·</span>
-                <a href="/admin.html" target="_blank" rel="noopener noreferrer" style={{ color: '#F5C542', fontWeight: 600, textDecoration: 'none' }}>Admin</a>
-                <span onClick={handleSignOut} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Sign out</span>
-              </>
-            ) : (
-              <>
-                <span>Not signed in</span>
-                <span style={{ color: '#4b5563' }}>·</span>
-                <a href="/admin.html" target="_blank" rel="noopener noreferrer" style={{ color: '#F5C542', fontWeight: 600, textDecoration: 'none' }}>Admin</a>
-              </>
-            )}
+            {userEmail ? (<span>Signed in as {userEmail}</span>) : (<span>Not signed in</span>)}
+            {isAdmin && (<><span style={{ color: '#4b5563' }}>·</span><span onClick={() => { setShowKnowledgeModal(true); void loadKnowledge(); }} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Admin</span></>)}
+            {userEmail && (<><span style={{ color: '#4b5563' }}>·</span><span onClick={handleSignOut} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Sign out</span></>)}
           </div>
         </div>
         {showHelp && (
@@ -898,6 +936,28 @@ function App() {
             </div>
           </div>
         )}
+        {showKnowledgeModal && (
+          <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
+            <div style={{ backgroundColor: '#111827', color: 'white', width: '100%', maxWidth: '60rem', borderRadius: '0.5rem', padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fbbf24' }}>Admin: Knowledge Editor</h2>
+                <button onClick={() => setShowKnowledgeModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                <button onClick={() => void loadKnowledge()} disabled={knowledgeBusy} style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>
+                  {knowledgeBusy ? 'Loading…' : 'Load'}
+                </button>
+                <button onClick={() => void saveKnowledge()} disabled={knowledgeBusy} style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>
+                  {knowledgeBusy ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>knowledge.json</label>
+                <textarea value={knowledgeText} onChange={(e) => setKnowledgeText(e.target.value)} spellCheck={false} style={{ width: '100%', minHeight: '24rem', backgroundColor: '#1f2937', color: '#e5e7eb', border: '1px solid #4b5563', borderRadius: '0.375rem', padding: '0.75rem', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace', fontSize: '0.875rem' }} />
+              </div>
+            </div>
+          </div>
+        )}
 
         {showCreate && (
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 60 }}>
@@ -907,7 +967,7 @@ function App() {
                 <input value={newRoomName} onChange={(e) => { const v = e.target.value.replace(/[^a-zA-Z0-9]/g, ''); setNewRoomName(v); void validateRoomName(v); }} placeholder="Room Name (letters/numbers, 4+)" style={{ padding: '0.5rem', backgroundColor: '#0E1622', color: '#E5E7EB', border: '1px solid #2A3A4A', borderRadius: '0.375rem' }} />
                 <div style={{ fontSize: '0.75rem', color: nameValid === false ? '#f87171' : '#9ca3af' }}>
                   {nameBusy ? 'Checking…' : nameValid === false ? 'Name invalid or already exists' : 'Only letters and numbers; 4+ chars'}
-                </div>
+          </div>
                 <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                   <button onClick={() => { setShowCreate(false); setNewRoomName(''); setNameValid(null); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Cancel</button>
                   <button onClick={async () => {
@@ -936,7 +996,7 @@ function App() {
                     });
                     temp.on('disconnect', () => temp.close());
                   }} disabled={!nameValid} style={{ backgroundColor: !nameValid ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: !nameValid ? 'not-allowed' : 'pointer' }}>OK</button>
-                </div>
+        </div>
               </div>
             </div>
           </div>
@@ -1197,7 +1257,7 @@ function App() {
       {/* Header aligned with content container */}
       <div style={{ backgroundColor: '#1f2937', padding: '1rem 0' }}>
         <div style={{ maxWidth: '64rem', margin: '0 auto', padding: '0 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button
+          <button 
             onClick={goToLobby}
             style={{ fontSize: '0.875rem', backgroundColor: '#4b5563', color: 'white', padding: '0.25rem 0.75rem', borderRadius: '0.25rem', border: 'none', cursor: 'pointer' }}
           >
@@ -1349,7 +1409,7 @@ function App() {
                 placeholder={selectedCharacter ? `Ask ${selectedCharacter}...` : 'Select a suspect, then ask your question...'}
                 style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
               />
-              <button
+              <button 
                 onClick={askQuestion}
                 disabled={!question.trim() || !selectedCharacter || !connected}
                 title={!connected ? 'Not connected' : (!selectedCharacter ? 'Pick a suspect' : (!question.trim() ? 'Type a question' : 'Ask'))}
@@ -1518,13 +1578,13 @@ function App() {
         {role === 'murderer' && (
           <div style={{ backgroundColor: '#1f2937', borderRadius: '0.5rem', padding: '1rem' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: '600', marginBottom: '1rem' }}>🎭 Character Control</h3>
-
+            
             {!characterLocked ? (
               <div>
                 <p style={{ color: '#d1d5db', marginBottom: '0.75rem' }}>
                   Select which character you want to control. Once selected, this choice is permanent for the game.
                 </p>
-
+                
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '0.75rem', marginBottom: '1rem' }}>
                   {characters.map((char) => {
                     const isSelected = controlledCharacter === char;
@@ -1589,7 +1649,7 @@ function App() {
                   })}
                 </div>
 
-                <button
+                <button 
                   onClick={lockCharacter}
                   disabled={!controlledCharacter || !connected}
                   style={{ backgroundColor: (!controlledCharacter || !connected) ? '#4b5563' : '#dc2626', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
@@ -1607,9 +1667,9 @@ function App() {
                     Character locked for the rest of the game
                   </p>
                 </div>
-
+                
                 <p style={{ color: '#d1d5db', marginBottom: '1rem' }}>
-                  Wait for the detective to ask <strong>{controlledCharacter}</strong> a question.
+                  Wait for the detective to ask <strong>{controlledCharacter}</strong> a question. 
                   When they do, you'll be able to respond as this character.
                 </p>
 
@@ -1621,7 +1681,7 @@ function App() {
                     <p style={{ fontSize: '0.875rem', marginBottom: '1rem', fontStyle: 'italic', backgroundColor: '#451a03', padding: '0.5rem', borderRadius: '0.25rem' }}>
                       "{pendingQuestion}"
                     </p>
-
+                    
                     <div style={{ marginBottom: '0.5rem' }}>
                       <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', marginBottom: '0.5rem' }}>Your Response as {controlledCharacter}:</label>
                       <textarea
@@ -1631,8 +1691,8 @@ function App() {
                         style={{ width: '100%', padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white', minHeight: '4rem', resize: 'vertical' }}
                       />
                     </div>
-
-                    <button
+                    
+                    <button 
                       onClick={sendAnswer}
                       disabled={!answerText.trim()}
                       style={{ backgroundColor: !answerText.trim() ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: 'pointer' }}
