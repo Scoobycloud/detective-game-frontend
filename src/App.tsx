@@ -179,6 +179,15 @@ function App() {
     }
   }, [API_URL, knowledgeText]);
 
+  const openAdminModal = useCallback(() => {
+    if (!isAdmin) {
+      showToast('Admin access required', 'error');
+      return;
+    }
+    setShowKnowledgeModal(true);
+    void loadKnowledge();
+  }, [isAdmin, loadKnowledge, showToast]);
+
   const goToLobby = () => {
     setGameState('lobby');
     setRole(null);
@@ -911,7 +920,18 @@ function App() {
 
           <div style={{ marginTop: '1rem', fontSize: '0.75rem', color: '#9ca3af', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
             {userEmail ? (<span>Signed in as {userEmail}</span>) : (<span>Not signed in</span>)}
-            {isAdmin && (<><span style={{ color: '#4b5563' }}>·</span><span onClick={() => { setShowKnowledgeModal(true); void loadKnowledge(); }} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Admin</span></>)}
+            <span style={{ color: '#4b5563' }}>·</span>
+            <span
+              onClick={openAdminModal}
+              style={{
+                cursor: isAdmin ? 'pointer' : 'not-allowed',
+                color: isAdmin ? '#F5C542' : '#6b7280',
+                fontWeight: 600
+              }}
+              title={isAdmin ? 'Open admin knowledge editor' : 'Admin access required'}
+            >
+              Admin
+            </span>
             {userEmail && (<><span style={{ color: '#4b5563' }}>·</span><span onClick={handleSignOut} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Sign out</span></>)}
           </div>
         </div>
