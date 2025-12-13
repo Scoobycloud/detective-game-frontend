@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin - Knowledge Editor</title>
+    <style>
+      body { background: #0b1220; color: #e5e7eb; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji","Segoe UI Emoji"; margin: 0; padding: 1rem; }
+      .card { max-width: 960px; margin: 0 auto; background: #111827; border: 1px solid #334155; border-radius: 8px; padding: 16px; }
+      .row { display: grid; gap: 8px; margin-bottom: 12px; }
+      input, textarea { background: #0E1622; color: #E5E7EB; border: 1px solid #2A3A4A; border-radius: 6px; padding: 10px; width: 100%; box-sizing: border-box; }
+      textarea { min-height: 420px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace; font-size: 13px; }
+      button { background: #2563eb; color: #fff; border: 0; padding: 10px 14px; border-radius: 6px; cursor: pointer; }
+      button.secondary { background: #059669; }
+      button:disabled { background: #4b5563; cursor: not-allowed; }
+      .toolbar { display: flex; gap: 8px; align-items: center; }
+      .msg { padding: 8px; border-radius: 6px; margin: 6px 0; }
+      .ok { background: #064e3b; }
+      .err { background: #7f1d1d; }
+      .muted { color: #9ca3af; font-size: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h2 style="margin: 0 0 8px 0; color: #fbbf24;">Admin: Knowledge Editor</h2>
+      <div class="row">
+        <label>Backend API URL (Render)</label>
+        <input id="apiUrl" placeholder="https://your-backend.onrender.com" />
+      </div>
+      <div class="row">
+        <label>Admin Token</label>
+        <input id="token" placeholder="ADMIN_TOKEN" />
+      </div>
+      <div class="toolbar">
+        <button id="loadBtn">Load</button>
+        <button id="saveBtn" class="secondary">Save</button>
+        <span id="status" class="muted"></span>
+      </div>
+      <div id="error" class="msg err" style="display:none;"></div>
+      <div id="ok" class="msg ok" style="display:none;"></div>
+      <div class="row" style="margin-top:8px;">
+        <label>knowledge.json</label>
+        <textarea id="jsonBox">{}</textarea>
+      </div>
+      <div class="muted">Tip: Changes take effect immediately for new questions. Keep a backup locally.</div>
+    </div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const apiUrl = $('apiUrl');
+      const token = $('token');
+      const loadBtn = $('loadBtn');
+      const saveBtn = $('saveBtn');
+      const status = $('status');
+      const errBox = $('error');
+      const okBox = $('ok');
+      const jsonBox = $('jsonBox');
+
+      function showMsg(el, text) {
+        el.style.display = text ? 'block' : 'none';
+        el.textContent = text || '';
+      }
+      function setBusy(b) {
+        loadBtn.disabled = b; saveBtn.disabled = b;
+        status.textContent = b ? 'Working…' : '';
+      }
+      async function loadKnowledge() {
+        showMsg(errBox, ''); showMsg(okBox, ''); setBusy(true);
+        try {
+          const res = await fetch(`${apiUrl.value}/admin/knowledge`, {
+            headers: { 'X-Admin-Token': token.value }
+          });
+          if (!res.ok) throw new Error(`Load failed (${res.status})`);
+          const data = await res.json();
+          jsonBox.value = JSON.stringify(data, null, 2);
+          showMsg(okBox, 'Knowledge loaded.');
+        } catch (e) {
+          showMsg(errBox, e.message || String(e));
+        } finally {
+          setBusy(false);
+        }
+      }
+      async function saveKnowledge() {
+        showMsg(errBox, ''); showMsg(okBox, ''); setBusy(true);
+        try {
+          let parsed;
+          try { parsed = JSON.parse(jsonBox.value); }
+          catch { throw new Error('Invalid JSON.'); }
+          const res = await fetch(`${apiUrl.value}/admin/knowledge`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'X-Admin-Token': token.value },
+            body: JSON.stringify(parsed)
+          });
+          if (!res.ok) {
+            let body = {};
+            try { body = await res.json(); } catch {}
+            const msg = body.detail || body.error || `Save failed (${res.status})`;
+            throw new Error(msg);
+          }
+          showMsg(okBox, 'Knowledge saved.');
+        } catch (e) {
+          showMsg(errBox, e.message || String(e));
+        } finally {
+          setBusy(false);
+        }
+      }
+      loadBtn.addEventListener('click', loadKnowledge);
+      saveBtn.addEventListener('click', saveKnowledge);
+    </script>
+  </body>
+  </html>
+
+
