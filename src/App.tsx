@@ -864,10 +864,16 @@ function App() {
             {userEmail ? (
               <>
                 <span>Signed in as {userEmail}</span>
+                <span style={{ color: '#4b5563' }}>·</span>
+                <a href="/admin.html" target="_blank" rel="noopener noreferrer" style={{ color: '#F5C542', fontWeight: 600, textDecoration: 'none' }}>Admin</a>
                 <span onClick={handleSignOut} style={{ cursor: 'pointer', color: '#F5C542', fontWeight: 600 }}>Sign out</span>
               </>
             ) : (
-              <span>Not signed in</span>
+              <>
+                <span>Not signed in</span>
+                <span style={{ color: '#4b5563' }}>·</span>
+                <a href="/admin.html" target="_blank" rel="noopener noreferrer" style={{ color: '#F5C542', fontWeight: 600, textDecoration: 'none' }}>Admin</a>
+              </>
             )}
           </div>
         </div>
