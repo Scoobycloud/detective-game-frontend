@@ -107,6 +107,7 @@ function App() {
   const [stageStatus, setStageStatus] = useState<string>('investigation');
   const [stageEndsAt, setStageEndsAt] = useState<number | null>(null);
   const [stageRemaining, setStageRemaining] = useState<string>('—');
+  const [stagePaused, setStagePaused] = useState<boolean>(false);
   const [authNote, setAuthNote] = useState<string>('');
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
@@ -134,7 +135,7 @@ function App() {
     tick();
     t = window.setInterval(tick, 1000);
     return () => window.clearInterval(t);
-  }, [stageEndsAt]);
+  }, [stageEndsAt, stagePaused]);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const audioCtxRef = useRef<any | null>(null);
   const recordTimerRef = useRef<any | null>(null);
@@ -529,21 +530,15 @@ function App() {
       const narrative = c?.summary?.narrative || '';
       const status = c?.status || 'investigation';
       setCaseInfo({ status, seed: c?.seed, narrative });
-      // compute stage end based on durations
-      const now = Date.now();
-      const durations: Record<string, number> = {
-        investigation: 10 * 60 * 1000,
-        interrogation: 15 * 60 * 1000,
-        accusation: 5 * 60 * 1000,
-      };
-      const idx = ['investigation', 'interrogation', 'accusation', 'closed'].indexOf(status);
-      if (idx >= 0 && idx < 3) {
-        // naive: assume transition happened when status changed; we don't have server timestamp, so approximate using fetch time
-        setStageEndsAt(now + durations[status]);
+      const meta = data?.stage || {};
+      const remainingSec = typeof meta.remaining_seconds === 'number' ? meta.remaining_seconds : null;
+      setStageStatus(meta.status || status);
+      setStagePaused(Boolean(meta.paused));
+      if (remainingSec !== null) {
+        setStageEndsAt(Date.now() + remainingSec * 1000);
       } else {
         setStageEndsAt(null);
       }
-      setStageStatus(status);
     } catch { }
   };
 
@@ -1379,10 +1374,34 @@ function App() {
             <div>
               <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#e5e7eb', textTransform: 'capitalize' }}>{stageStatus}</div>
               <div style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
-                {stageStatus === 'closed' ? 'Stage complete' : `Next in ${stageRemaining}`}
+                {stagePaused ? 'Paused' : stageStatus === 'closed' ? 'Stage complete' : `Next in ${stageRemaining}`}
               </div>
             </div>
           </div>
+          {role === 'detective' && (
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button
+                onClick={async () => {
+                  try {
+                    await fetch(`${API_URL}/rooms/${myRoom}/status`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ pause: !stagePaused })
+                    });
+                    setStagePaused(!stagePaused);
+                    if (!stagePaused && stageEndsAt) {
+                      // freeze remaining
+                      setStageEndsAt(Date.now() + Math.max(0, stageEndsAt - Date.now()));
+                    }
+                    await fetchCase();
+                  } catch {}
+                }}
+                style={{ backgroundColor: stagePaused ? '#059669' : '#f59e0b', color: stagePaused ? 'white' : '#111827', padding: '0.35rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}
+              >
+                {stagePaused ? 'Resume' : 'Pause'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Detective Interface */}
