@@ -103,12 +103,38 @@ function App() {
   // const [mediaPreview, setMediaPreview] = useState<{ src: string; kind: 'image' | 'video' } | null>(null);
   // const previewBlockUntilRef = useRef<number>(0);
   const [toast, setToast] = useState<{ text: string; type: 'ok' | 'error' } | null>(null);
+  // Stage/banner
+  const [stageStatus, setStageStatus] = useState<string>('investigation');
+  const [stageEndsAt, setStageEndsAt] = useState<number | null>(null);
+  const [stageRemaining, setStageRemaining] = useState<string>('—');
   const [authNote, setAuthNote] = useState<string>('');
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
     window.clearTimeout((showToast as any)._t);
     (showToast as any)._t = window.setTimeout(() => setToast(null), 2500);
   };
+  // Stage remaining ticker
+  useEffect(() => {
+    let t: any;
+    const tick = () => {
+      if (!stageEndsAt) {
+        setStageRemaining('—');
+        return;
+      }
+      const diff = stageEndsAt - Date.now();
+      if (diff <= 0) {
+        setStageRemaining('0:00');
+        return;
+      }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+      setStageRemaining(`${m}:${pad(s)}`);
+    };
+    tick();
+    t = window.setInterval(tick, 1000);
+    return () => window.clearInterval(t);
+  }, [stageEndsAt]);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const audioCtxRef = useRef<any | null>(null);
   const recordTimerRef = useRef<any | null>(null);
@@ -501,7 +527,23 @@ function App() {
       const data = await res.json();
       const c = data?.case || null;
       const narrative = c?.summary?.narrative || '';
-      setCaseInfo({ status: c?.status, seed: c?.seed, narrative });
+      const status = c?.status || 'investigation';
+      setCaseInfo({ status, seed: c?.seed, narrative });
+      // compute stage end based on durations
+      const now = Date.now();
+      const durations: Record<string, number> = {
+        investigation: 10 * 60 * 1000,
+        interrogation: 15 * 60 * 1000,
+        accusation: 5 * 60 * 1000,
+      };
+      const idx = ['investigation', 'interrogation', 'accusation', 'closed'].indexOf(status);
+      if (idx >= 0 && idx < 3) {
+        // naive: assume transition happened when status changed; we don't have server timestamp, so approximate using fetch time
+        setStageEndsAt(now + durations[status]);
+      } else {
+        setStageEndsAt(null);
+      }
+      setStageStatus(status);
     } catch { }
   };
 
@@ -1330,6 +1372,17 @@ function App() {
               {msg}
             </div>
           ))}
+        </div>
+        <div style={{ backgroundColor: '#0b1220', borderRadius: '0.5rem', padding: '0.75rem', border: '1px solid #243047', marginBottom: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: '0.75rem', height: '0.75rem', borderRadius: '9999px', backgroundColor: '#38bdf8' }} />
+            <div>
+              <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#e5e7eb', textTransform: 'capitalize' }}>{stageStatus}</div>
+              <div style={{ fontSize: '0.8rem', color: '#9ca3af' }}>
+                {stageStatus === 'closed' ? 'Stage complete' : `Next in ${stageRemaining}`}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Detective Interface */}
