@@ -427,6 +427,16 @@ function App() {
         }
       });
 
+      socket.on('stage_update', ({ stage, paused, remaining_seconds }: { stage?: string; paused?: boolean; remaining_seconds?: number }) => {
+        setStageStatus(stage || 'investigation');
+        setStagePaused(Boolean(paused));
+        if (typeof remaining_seconds === 'number') {
+          setStageEndsAt(Date.now() + remaining_seconds * 1000);
+        } else {
+          setStageEndsAt(null);
+        }
+      });
+
       // Backend sends 'question_for_murderer' when detective asks human-controlled character
       socket.on('question_for_murderer', ({ correlation_id, character, question }: { correlation_id: string; character: string; question: string }) => {
         if (role === 'murderer') {
