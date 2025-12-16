@@ -574,9 +574,13 @@ function App() {
     const acc = Math.max(1, Number(stageDurations.accusation) || 0);
     setStageConfigBusy(true);
     try {
+      const idToken = await auth.currentUser?.getIdToken();
       await fetch(`${API_URL}/rooms/${myRoom}/stage_config`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(idToken ? { Authorization: `Bearer ${idToken}` } : {})
+        },
         body: JSON.stringify({
           investigation: inv * 60,
           interrogation: inter * 60,
