@@ -2290,6 +2290,9 @@ function App() {
                 ✕
               </button>
             </div>
+            <div style={{ marginBottom: '0.5rem', color: '#9ca3af', fontSize: '0.9rem' }}>
+              GM panel build check: visible means latest deploy loaded.
+            </div>
 
             <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
               {/* Stage Timers (surfaced at top so it's easy to find) */}
