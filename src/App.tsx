@@ -2292,6 +2292,35 @@ function App() {
             </div>
 
             <div style={{ display: 'grid', gap: '1rem', marginBottom: '1rem' }}>
+              {/* Stage Timers (surfaced at top so it's easy to find) */}
+              <div style={{ border: '1px solid #4b5563', borderRadius: '0.5rem', padding: '0.75rem', backgroundColor: '#0f172a' }}>
+                <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: '700', color: '#fcd34d', marginBottom: '0.5rem' }}>
+                  ⏱️ Stage Timers (minutes)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Investigation</span>
+                    <input type="number" min={1} value={stageDurations.investigation} onChange={(e) => setStageDurations({ ...stageDurations, investigation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Interrogation</span>
+                    <input type="number" min={1} value={stageDurations.interrogation} onChange={(e) => setStageDurations({ ...stageDurations, interrogation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Accusation</span>
+                    <input type="number" min={1} value={stageDurations.accusation} onChange={(e) => setStageDurations({ ...stageDurations, accusation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => void fetchCase()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                    Refresh
+                  </button>
+                  <button onClick={() => void saveStageDurations()} disabled={stageConfigBusy || !myRoom} style={{ backgroundColor: stageConfigBusy ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: stageConfigBusy ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+                    {stageConfigBusy ? 'Saving…' : 'Save Timers'}
+                  </button>
+                </div>
+              </div>
+
               {/* Narrative Story */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
@@ -2339,35 +2368,6 @@ Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. He was a res
                       showToast('Case summary updated', 'ok');
                     } catch (e) { showToast('Update failed', 'error'); }
                   }} style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Save Summary</button>
-                </div>
-              </div>
-
-              {/* Stage Timers */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
-                  ⏱️ Stage Timers (minutes)
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Investigation</span>
-                    <input type="number" min={1} value={stageDurations.investigation} onChange={(e) => setStageDurations({ ...stageDurations, investigation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Interrogation</span>
-                    <input type="number" min={1} value={stageDurations.interrogation} onChange={(e) => setStageDurations({ ...stageDurations, interrogation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Accusation</span>
-                    <input type="number" min={1} value={stageDurations.accusation} onChange={(e) => setStageDurations({ ...stageDurations, accusation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
-                  </div>
-                </div>
-                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
-                  <button onClick={() => void fetchCase()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>
-                    Refresh
-                  </button>
-                  <button onClick={() => void saveStageDurations()} disabled={stageConfigBusy || !myRoom} style={{ backgroundColor: stageConfigBusy ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: stageConfigBusy ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
-                    {stageConfigBusy ? 'Saving…' : 'Save Timers'}
-                  </button>
                 </div>
               </div>
 
