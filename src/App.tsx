@@ -108,6 +108,8 @@ function App() {
   const [stageEndsAt, setStageEndsAt] = useState<number | null>(null);
   const [stageRemaining, setStageRemaining] = useState<string>('—');
   const [stagePaused, setStagePaused] = useState<boolean>(false);
+  const [stageDurations, setStageDurations] = useState<{ investigation: number; interrogation: number; accusation: number }>({ investigation: 10, interrogation: 15, accusation: 5 });
+  const [stageConfigBusy, setStageConfigBusy] = useState<boolean>(false);
   const [authNote, setAuthNote] = useState<string>('');
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
@@ -427,13 +429,20 @@ function App() {
         }
       });
 
-      socket.on('stage_update', ({ stage, paused, remaining_seconds }: { stage?: string; paused?: boolean; remaining_seconds?: number }) => {
+      socket.on('stage_update', ({ stage, paused, remaining_seconds, durations }: { stage?: string; paused?: boolean; remaining_seconds?: number; durations?: Record<string, number> }) => {
         setStageStatus(stage || 'investigation');
         setStagePaused(Boolean(paused));
         if (typeof remaining_seconds === 'number') {
           setStageEndsAt(Date.now() + remaining_seconds * 1000);
         } else {
           setStageEndsAt(null);
+        }
+        if (durations) {
+          setStageDurations(prev => ({
+            investigation: durations.investigation ? Math.max(1, Math.round(durations.investigation / 60)) : prev.investigation,
+            interrogation: durations.interrogation ? Math.max(1, Math.round(durations.interrogation / 60)) : prev.interrogation,
+            accusation: durations.accusation ? Math.max(1, Math.round(durations.accusation / 60)) : prev.accusation
+          }));
         }
       });
 
@@ -544,12 +553,44 @@ function App() {
       const remainingSec = typeof meta.remaining_seconds === 'number' ? meta.remaining_seconds : null;
       setStageStatus(meta.status || status);
       setStagePaused(Boolean(meta.paused));
+      const durationsSec = (meta as any)?.durations || {};
+      setStageDurations({
+        investigation: durationsSec.investigation ? Math.max(1, Math.round(durationsSec.investigation / 60)) : 10,
+        interrogation: durationsSec.interrogation ? Math.max(1, Math.round(durationsSec.interrogation / 60)) : 15,
+        accusation: durationsSec.accusation ? Math.max(1, Math.round(durationsSec.accusation / 60)) : 5
+      });
       if (remainingSec !== null) {
         setStageEndsAt(Date.now() + remainingSec * 1000);
       } else {
         setStageEndsAt(null);
       }
     } catch { }
+  };
+
+  const saveStageDurations = async () => {
+    if (!myRoom) return;
+    const inv = Math.max(1, Number(stageDurations.investigation) || 0);
+    const inter = Math.max(1, Number(stageDurations.interrogation) || 0);
+    const acc = Math.max(1, Number(stageDurations.accusation) || 0);
+    setStageConfigBusy(true);
+    try {
+      await fetch(`${API_URL}/rooms/${myRoom}/stage_config`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          investigation: inv * 60,
+          interrogation: inter * 60,
+          accusation: acc * 60
+        })
+      });
+      await fetchCase();
+      showToast('Stage timers updated', 'ok');
+    } catch (e) {
+      showToast('Failed to update stage timers', 'error');
+      console.error('stage_config error', e);
+    } finally {
+      setStageConfigBusy(false);
+    }
   };
 
   const fetchEvidence = async () => {
@@ -2289,6 +2330,35 @@ Example: 'Dr. Blackwood was found murdered in his study at 9:15 PM. He was a res
                       showToast('Case summary updated', 'ok');
                     } catch (e) { showToast('Update failed', 'error'); }
                   }} style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Save Summary</button>
+                </div>
+              </div>
+
+              {/* Stage Timers */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', color: '#d1d5db', marginBottom: '0.5rem' }}>
+                  ⏱️ Stage Timers (minutes)
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '0.5rem', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Investigation</span>
+                    <input type="number" min={1} value={stageDurations.investigation} onChange={(e) => setStageDurations({ ...stageDurations, investigation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Interrogation</span>
+                    <input type="number" min={1} value={stageDurations.interrogation} onChange={(e) => setStageDurations({ ...stageDurations, interrogation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#9ca3af' }}>Accusation</span>
+                    <input type="number" min={1} value={stageDurations.accusation} onChange={(e) => setStageDurations({ ...stageDurations, accusation: Number(e.target.value) || 1 })} style={{ padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                  <button onClick={() => void fetchCase()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>
+                    Refresh
+                  </button>
+                  <button onClick={() => void saveStageDurations()} disabled={stageConfigBusy || !myRoom} style={{ backgroundColor: stageConfigBusy ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: stageConfigBusy ? 'not-allowed' : 'pointer', fontWeight: 600 }}>
+                    {stageConfigBusy ? 'Saving…' : 'Save Timers'}
+                  </button>
                 </div>
               </div>
 
