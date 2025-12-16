@@ -6,6 +6,11 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'fire
 
 // Backend URL
 const API_URL = process.env.REACT_APP_API_URL || 'https://detective-game-online-z4oe.onrender.com';
+// Expose for quick console debugging
+if (typeof window !== 'undefined') {
+  (window as any).__APP_API_URL__ = API_URL;
+  (window as any).__APP_AUTH__ = auth;
+}
 console.log('🔧 API_URL:', API_URL);
 
 // Real-time Detective Game Interface with Socket.IO
