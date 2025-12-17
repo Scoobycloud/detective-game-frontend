@@ -85,7 +85,6 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
-  const [forceRender, setForceRender] = useState(0);
   // Admin knowledge editor
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
   const [knowledgeText, setKnowledgeText] = useState<string>('{}');
@@ -998,18 +997,11 @@ function App() {
             {/* GM button outside the disabled area so admins can always access it */}
             {isAdmin && (
               <button
-                onClick={(e) => { 
-                  e.stopPropagation(); 
-                  console.log('GM button clicked! isAdmin=', isAdmin, 'showGameMasterPanel before=', showGameMasterPanel);
-                  setShowGameMasterPanel(true); 
-                  setForceRender(v => v + 1);
-                  console.log('Set showGameMasterPanel to true, forceRender triggered');
-                  setTimeout(() => console.log('After timeout, showGameMasterPanel=', showGameMasterPanel), 100);
-                }}
+                onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
                 aria-label="Open Game Master"
-                style={{ width: '100%', marginTop: '0.5rem', backgroundColor: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '2px solid #15803d', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600, position: 'relative', zIndex: 10 }}
+                style={{ width: '100%', marginTop: '0.5rem', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
                 title="Game Master"
-              >🎭 Game Master (isAdmin: {isAdmin ? 'YES' : 'NO'}, render: {forceRender})</button>
+              >🎭 Game Master</button>
             )}
           </div>
 
@@ -1147,10 +1139,39 @@ function App() {
 
       {/* GameMaster Panel - LOBBY */}
       {showGameMasterPanel && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(255,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }}>
-          <div style={{ backgroundColor: '#ffff00', color: '#000', padding: '3rem', fontSize: '2rem', border: '10px solid #0f0', textAlign: 'center' }}>
-            <div>🎭 CAN YOU SEE THIS?</div>
-            <button onClick={() => setShowGameMasterPanel(false)} style={{ marginTop: '1rem', padding: '1rem 2rem', fontSize: '1.5rem', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>CLOSE</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '32rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#a855f7' }}>🎭 Game Master</h2>
+              <button onClick={() => setShowGameMasterPanel(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            
+            {/* Stage Timers */}
+            <div style={{ border: '1px solid #4b5563', borderRadius: '0.5rem', padding: '0.75rem', backgroundColor: '#0f172a', marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: '700', color: '#fcd34d', marginBottom: '0.5rem' }}>⏱️ Stage Timers (minutes)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Investigation</span>
+                  <input type="number" min={1} value={stageDurations.investigation} onChange={(e) => setStageDurations({ ...stageDurations, investigation: Number(e.target.value) || 1 })} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Interrogation</span>
+                  <input type="number" min={1} value={stageDurations.interrogation} onChange={(e) => setStageDurations({ ...stageDurations, interrogation: Number(e.target.value) || 1 })} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Accusation</span>
+                  <input type="number" min={1} value={stageDurations.accusation} onChange={(e) => setStageDurations({ ...stageDurations, accusation: Number(e.target.value) || 1 })} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                </div>
+              </div>
+              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => void fetchCase()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Refresh</button>
+                <button onClick={() => void saveStageDurations()} disabled={stageConfigBusy || !myRoom} style={{ backgroundColor: stageConfigBusy ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: stageConfigBusy ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{stageConfigBusy ? 'Saving…' : 'Save Timers'}</button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowGameMasterPanel(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Close</button>
+            </div>
           </div>
         </div>
       )}
@@ -2050,10 +2071,39 @@ function App() {
 
       {/* GameMaster Panel */}
       {showGameMasterPanel && (
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(255,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }}>
-          <div style={{ backgroundColor: '#ffff00', color: '#000', padding: '3rem', fontSize: '2rem', border: '10px solid #0f0', textAlign: 'center' }}>
-            <div>🎭 CAN YOU SEE THIS?</div>
-            <button onClick={() => setShowGameMasterPanel(false)} style={{ marginTop: '1rem', padding: '1rem 2rem', fontSize: '1.5rem', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>CLOSE</button>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999, padding: '1rem' }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '32rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#a855f7' }}>🎭 Game Master</h2>
+              <button onClick={() => setShowGameMasterPanel(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>✕</button>
+            </div>
+            
+            {/* Stage Timers */}
+            <div style={{ border: '1px solid #4b5563', borderRadius: '0.5rem', padding: '0.75rem', backgroundColor: '#0f172a', marginBottom: '1rem' }}>
+              <label style={{ display: 'block', fontSize: '0.95rem', fontWeight: '700', color: '#fcd34d', marginBottom: '0.5rem' }}>⏱️ Stage Timers (minutes)</label>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Investigation</span>
+                  <input type="number" min={1} value={stageDurations.investigation} onChange={(e) => setStageDurations({ ...stageDurations, investigation: Number(e.target.value) || 1 })} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Interrogation</span>
+                  <input type="number" min={1} value={stageDurations.interrogation} onChange={(e) => setStageDurations({ ...stageDurations, interrogation: Number(e.target.value) || 1 })} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                </div>
+                <div>
+                  <span style={{ fontSize: '0.75rem', color: '#9ca3af' }}>Accusation</span>
+                  <input type="number" min={1} value={stageDurations.accusation} onChange={(e) => setStageDurations({ ...stageDurations, accusation: Number(e.target.value) || 1 })} style={{ width: '100%', padding: '0.5rem', backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', color: 'white' }} />
+                </div>
+              </div>
+              <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem' }}>
+                <button onClick={() => void fetchCase()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600 }}>Refresh</button>
+                <button onClick={() => void saveStageDurations()} disabled={stageConfigBusy || !myRoom} style={{ backgroundColor: stageConfigBusy ? '#4b5563' : '#16a34a', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.5rem 0.75rem', cursor: stageConfigBusy ? 'not-allowed' : 'pointer', fontWeight: 600 }}>{stageConfigBusy ? 'Saving…' : 'Save Timers'}</button>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setShowGameMasterPanel(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 1rem', borderRadius: '0.375rem', cursor: 'pointer' }}>Close</button>
+            </div>
           </div>
         </div>
       )}
