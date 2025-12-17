@@ -943,6 +943,7 @@ function App() {
 
   if (gameState === 'lobby') {
     return (
+      <>
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div onClick={() => void ensureMusicStarted()} style={{ textAlign: 'center', padding: '2rem', backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/lobbybckgrnd.png?v=3')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#0a0f16', borderRadius: '0.5rem', border: '1px solid #223041', maxWidth: '28rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -1963,7 +1964,7 @@ function App() {
                       {e.notes && (
                         <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{e.notes}</div>
                       )}
-                    </div>
+    </div>
                   );
                 })}
               </div>
@@ -2074,6 +2075,7 @@ function App() {
         </div>
       </div>
     )}
+    </>
   );
 }
 
