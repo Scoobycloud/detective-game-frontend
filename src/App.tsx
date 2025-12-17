@@ -2038,19 +2038,42 @@ function App() {
           </div>
         </div>
       )}
-      {/* GameMaster Panel - MOVED OUTSIDE LOBBY DIV */}
-      {showGameMasterPanel ? (
-        <>
-        {console.log('✅ GM PANEL RENDERING OUTSIDE! showGameMasterPanel=', showGameMasterPanel, 'forceRender=', forceRender)}
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999 }}>
-          <div style={{ backgroundColor: '#ff0000', color: 'white', padding: '3rem', fontSize: '3rem', border: '10px solid yellow', fontWeight: 'bold' }}>
-            🎭 MODAL IS VISIBLE! (OUTSIDE LOBBY) forceRender={forceRender}
-            <button onClick={() => setShowGameMasterPanel(false)} style={{ display: 'block', marginTop: '1rem', padding: '1rem', fontSize: '2rem', backgroundColor: 'yellow', color: 'black', border: 'none', cursor: 'pointer' }}>CLOSE</button>
-          </div>
-        </div>
-        </>
-      ) : null}
     </div>
+
+    {/* GameMaster Panel - COMPLETELY OUTSIDE ALL DIVS */}
+    {showGameMasterPanel && (
+      <div 
+        style={{ 
+          position: 'fixed', 
+          top: '0px', 
+          left: '0px', 
+          width: '100vw', 
+          height: '100vh', 
+          backgroundColor: 'rgba(255,0,0,0.95)', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          zIndex: 999999,
+          pointerEvents: 'all'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {console.log('🔴 RED MODAL RENDERING! showGameMasterPanel=', showGameMasterPanel)}
+        <div style={{ backgroundColor: '#ffff00', color: '#000000', padding: '5rem', fontSize: '4rem', border: '20px solid #00ff00', fontWeight: 'bold', textAlign: 'center' }}>
+          <div>🎭 CAN YOU SEE THIS?</div>
+          <div style={{ fontSize: '2rem', marginTop: '2rem' }}>forceRender={forceRender}</div>
+          <button 
+            onClick={() => { 
+              console.log('CLOSE clicked'); 
+              setShowGameMasterPanel(false); 
+            }} 
+            style={{ display: 'block', margin: '2rem auto', padding: '2rem 4rem', fontSize: '3rem', backgroundColor: '#ff0000', color: 'white', border: '5px solid black', cursor: 'pointer', fontWeight: 'bold' }}
+          >
+            CLOSE MODAL
+          </button>
+        </div>
+      </div>
+    )}
   );
 }
 
