@@ -975,8 +975,8 @@ function App() {
             </div>
           )}
 
-          <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
-            <div style={{ display: 'grid', gap: '0.5rem' }}>
+          <div style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gap: '0.5rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
               <select
                 value={roomCode}
                 onChange={(e) => { setRoomCode(e.target.value); setMyRoom(e.target.value || null); if (e.target.value) addMessage(`🔑 Selected room: ${e.target.value}`); }}
@@ -992,17 +992,17 @@ function App() {
                   onClick={() => { setShowCreate(true); void ensureMusicStarted(); }}
                   style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
                 >Create New Room</button>
-                {isAdmin && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
-                    aria-label="Open Game Master"
-                    style={{ flex: 1, backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
-                    title="Game Master"
-                  >🎭 Game Master</button>
-                )}
               </div>
             </div>
-            {/* Removed redundant selected room label; dropdown already shows selection */}
+            {/* GM button outside the disabled area so admins can always access it */}
+            {isAdmin && (
+              <button
+                onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
+                aria-label="Open Game Master"
+                style={{ width: '100%', marginTop: '0.5rem', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
+                title="Game Master"
+              >🎭 Game Master</button>
+            )}
           </div>
 
           <div style={{ marginBottom: '1rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
