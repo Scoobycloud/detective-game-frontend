@@ -85,6 +85,7 @@ function App() {
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
   const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
+  const [forceRender, setForceRender] = useState(0);
   // Admin knowledge editor
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
   const [knowledgeText, setKnowledgeText] = useState<string>('{}');
@@ -999,14 +1000,16 @@ function App() {
               <button
                 onClick={(e) => { 
                   e.stopPropagation(); 
-                  console.log('GM button clicked! isAdmin=', isAdmin, 'showGameMasterPanel=', showGameMasterPanel);
+                  console.log('GM button clicked! isAdmin=', isAdmin, 'showGameMasterPanel before=', showGameMasterPanel);
                   setShowGameMasterPanel(true); 
-                  console.log('Set showGameMasterPanel to true');
+                  setForceRender(v => v + 1);
+                  console.log('Set showGameMasterPanel to true, forceRender triggered');
+                  setTimeout(() => console.log('After timeout, showGameMasterPanel=', showGameMasterPanel), 100);
                 }}
                 aria-label="Open Game Master"
                 style={{ width: '100%', marginTop: '0.5rem', backgroundColor: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '2px solid #15803d', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600, position: 'relative', zIndex: 10 }}
                 title="Game Master"
-              >🎭 Game Master (isAdmin: {isAdmin ? 'YES' : 'NO'})</button>
+              >🎭 Game Master (isAdmin: {isAdmin ? 'YES' : 'NO'}, render: {forceRender})</button>
             )}
           </div>
 
@@ -2036,11 +2039,15 @@ function App() {
         </div>
       )}
 
-      {/* GameMaster Panel */}
-      {(() => {
-        console.log('GM Panel render check: showGameMasterPanel=', showGameMasterPanel);
-        return showGameMasterPanel;
-      })() && (
+      {/* GameMaster Panel - SIMPLIFIED CONDITIONAL */}
+      {showGameMasterPanel ? (
+        <>
+        {console.log('✅ GM PANEL IS RENDERING! showGameMasterPanel=', showGameMasterPanel, 'forceRender=', forceRender)}
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 99999 }}>
+          <div style={{ backgroundColor: '#ff0000', color: 'white', padding: '2rem', fontSize: '2rem', border: '5px solid yellow' }}>
+            🎭 TEST MODAL IS VISIBLE! forceRender={forceRender}
+          </div>
+        </div>
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 9999 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '3px solid #10b981' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
@@ -2315,7 +2322,8 @@ Dr. Blackwood | 8:30-9:15 PM | Lecture ended at 8:30, whereabouts unknown after 
             </div>
           </div>
         </div>
-      )}
+        </>
+      ) : null}
     </div>
   );
 }
