@@ -251,7 +251,7 @@ function App() {
   const controlledRef = useRef<string>("");
 
   const characters = [
-    'Mrs. Bellamy',
+    'Ms. Banana',
     'Mr. Holloway', 
     'Tommy the Janitor',
     'Dr. Adrian Blackwood'
@@ -259,7 +259,7 @@ function App() {
 
   // Optional images (place under public/images/characters)
   const characterImages: Record<string, string> = {
-    'Mrs. Bellamy': '/images/characters/mrs_bellamy.png',
+    'Ms. Banana': '/images/characters/ms_banana.png',
     'Mr. Holloway': '/images/characters/mr_holloway.png',
     'Tommy the Janitor': '/images/characters/tommy_the_janitor.png',
     'Dr. Adrian Blackwood': '/images/characters/dr_adrian_blackwood.png',
