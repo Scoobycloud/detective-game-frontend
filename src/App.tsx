@@ -115,7 +115,6 @@ function App() {
   const [stagePaused, setStagePaused] = useState<boolean>(false);
   const [stageDurations, setStageDurations] = useState<{ investigation: number; interrogation: number; accusation: number }>({ investigation: 10, interrogation: 15, accusation: 5 });
   const [stageConfigBusy, setStageConfigBusy] = useState<boolean>(false);
-  const [authNote, setAuthNote] = useState<string>('');
   const showToast = (text: string, type: 'ok' | 'error' = 'ok') => {
     setToast({ text, type });
     window.clearTimeout((showToast as any)._t);
@@ -296,7 +295,6 @@ function App() {
       .then((result: any) => {
         if (result && result.user) {
           addMessage(`✅ Signed in (redirect): ${result.user.email || result.user.uid}`);
-          setAuthNote('');
         }
       })
       .catch((err: any) => {
@@ -304,7 +302,6 @@ function App() {
           const code = String(err?.code || '');
           const msg = String(err?.message || '');
           addMessage(`❌ Redirect sign-in error: ${code} ${msg}`);
-          setAuthNote(`Redirect error: ${code} ${msg}`);
           console.error('Redirect sign-in error:', err);
         } catch {}
       });
@@ -328,14 +325,12 @@ function App() {
         const code = String(err?.code || '');
         const msg = String(err?.message || '');
         addMessage(`ℹ️ Popup sign-in failed (${code || 'unknown'}). Falling back to redirect…`);
-        setAuthNote(`Popup error: ${code} ${msg}`);
         console.error('Popup sign-in error:', err);
         await signInWithRedirect(auth, provider);
       }
     } catch (e: any) {
       const msg = String(e?.message || e);
       addMessage(`❌ Sign-in failed: ${msg}`);
-      setAuthNote(`Sign-in failed: ${msg}`);
       console.error('Sign-in failed:', e);
     } finally {
       setAuthBusy(false);
@@ -355,11 +350,6 @@ function App() {
   useEffect(() => {
     addMessage('🎮 Welcome to Detective Game Online!');
     addMessage('Choose your role to begin...');
-    try {
-      const origin = window.location.origin;
-      const authDomain = (auth as any)?.app?.options?.authDomain || 'n/a';
-      setAuthNote(`Auth debug → origin: ${origin} | authDomain: ${authDomain}`);
-    } catch {}
   }, []);
 
   const loadRooms = useCallback(async () => {
@@ -966,11 +956,6 @@ function App() {
                 <button onClick={(e) => { e.stopPropagation(); void ensureMusicStarted(); void handleSignIn(); }} disabled={authBusy} style={{ width: '100%', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', fontWeight: 600, letterSpacing: '0.02em' }}>
                   {authBusy ? 'Signing in…' : 'Continue with Google'}
                 </button>
-                {authNote && (
-                  <div style={{ fontSize: '0.75rem', color: '#9ca3af', textAlign: 'left', backgroundColor: '#0E1622', border: '1px dashed #2A3A4A', padding: '0.5rem', borderRadius: '0.375rem' }}>
-                    {authNote}
-                  </div>
-                )}
               </div>
             </div>
           )}
