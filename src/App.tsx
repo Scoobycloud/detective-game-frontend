@@ -997,11 +997,16 @@ function App() {
             {/* GM button outside the disabled area so admins can always access it */}
             {isAdmin && (
               <button
-                onClick={(e) => { e.stopPropagation(); setShowGameMasterPanel(true); }}
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  console.log('GM button clicked! isAdmin=', isAdmin, 'showGameMasterPanel=', showGameMasterPanel);
+                  setShowGameMasterPanel(true); 
+                  console.log('Set showGameMasterPanel to true');
+                }}
                 aria-label="Open Game Master"
-                style={{ width: '100%', marginTop: '0.5rem', backgroundColor: 'transparent', color: '#F5C542', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '1px solid #C7961E', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600 }}
+                style={{ width: '100%', marginTop: '0.5rem', backgroundColor: '#16a34a', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', border: '2px solid #15803d', cursor: 'pointer', letterSpacing: '0.02em', fontWeight: 600, position: 'relative', zIndex: 10 }}
                 title="Game Master"
-              >🎭 Game Master</button>
+              >🎭 Game Master (isAdmin: {isAdmin ? 'YES' : 'NO'})</button>
             )}
           </div>
 
