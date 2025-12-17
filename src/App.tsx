@@ -2037,11 +2037,14 @@ function App() {
       )}
 
       {/* GameMaster Panel */}
-      {showGameMasterPanel && (
-        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 100 }}>
-          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+      {(() => {
+        console.log('GM Panel render check: showGameMasterPanel=', showGameMasterPanel);
+        return showGameMasterPanel;
+      })() && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 9999 }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1.5rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', border: '3px solid #10b981' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#a855f7' }}>🎭 Game Master</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#10b981' }}>🎭 MODAL IS RENDERING! Game Master</h2>
               <button
                 onClick={() => setShowGameMasterPanel(false)}
                 style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}
