@@ -962,16 +962,46 @@ function App() {
 
           <div style={{ marginBottom: '1rem' }}>
             <div style={{ display: 'grid', gap: '0.5rem', opacity: userEmail ? 1 : 0.5, pointerEvents: userEmail ? 'auto' : 'none' }}>
-              <select
-                value={roomCode}
-                onChange={(e) => { setRoomCode(e.target.value); setMyRoom(e.target.value || null); if (e.target.value) addMessage(`🔑 Selected room: ${e.target.value}`); }}
-                style={{ width: '100%', padding: '0.5rem', backgroundColor: '#0E1622', border: '1px solid #2A3A4A', borderRadius: '0.25rem', color: '#E5E7EB' }}
-              >
-                <option value="">Select a room…</option>
-                {rooms.map((r) => (
-                  <option key={r.code} value={r.code}>{r.name ? `${r.name} (${r.code})` : r.code}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <select
+                  value={roomCode}
+                  onChange={(e) => { setRoomCode(e.target.value); setMyRoom(e.target.value || null); if (e.target.value) addMessage(`🔑 Selected room: ${e.target.value}`); }}
+                  style={{ flex: 1, padding: '0.5rem', backgroundColor: '#0E1622', border: '1px solid #2A3A4A', borderRadius: '0.25rem', color: '#E5E7EB' }}
+                >
+                  <option value="">Select a room…</option>
+                  {rooms.map((r) => (
+                    <option key={r.code} value={r.code}>{r.name ? `${r.name} (${r.code})` : r.code}</option>
+                  ))}
+                </select>
+                {isAdmin && roomCode && (
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!window.confirm(`Delete room ${roomCode} and all its data? This cannot be undone.`)) return;
+                      try {
+                        const idToken = await auth.currentUser?.getIdToken();
+                        const res = await fetch(`${API_URL}/rooms/${roomCode}`, {
+                          method: 'DELETE',
+                          headers: { Authorization: `Bearer ${idToken}` }
+                        });
+                        if (res.ok) {
+                          addMessage(`🗑️ Room ${roomCode} deleted`);
+                          setRoomCode('');
+                          setMyRoom(null);
+                          void loadRooms();
+                        } else {
+                          const data = await res.json().catch(() => ({}));
+                          addMessage(`❌ Delete failed: ${data?.detail || res.statusText}`);
+                        }
+                      } catch (err: any) {
+                        addMessage(`❌ Delete failed: ${err?.message || err}`);
+                      }
+                    }}
+                    style={{ backgroundColor: '#7f1d1d', color: 'white', border: 'none', borderRadius: '0.25rem', padding: '0.5rem 0.75rem', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}
+                    title="Delete room (admin only)"
+                  >🗑️</button>
+                )}
+              </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
             <button 
                   onClick={() => { setShowCreate(true); void ensureMusicStarted(); }}
