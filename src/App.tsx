@@ -2047,17 +2047,16 @@ function App() {
           </div>
         </div>
       )}
-    </div>
 
-    {/* GameMaster Panel */}
-    {showGameMasterPanel && (
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(255,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }}>
-        <div style={{ backgroundColor: '#ffff00', color: '#000', padding: '3rem', fontSize: '2rem', border: '10px solid #0f0', textAlign: 'center' }}>
-          <div>🎭 CAN YOU SEE THIS?</div>
-          <button onClick={() => setShowGameMasterPanel(false)} style={{ marginTop: '1rem', padding: '1rem 2rem', fontSize: '1.5rem', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>CLOSE</button>
+      {/* GameMaster Panel */}
+      {showGameMasterPanel && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(255,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }}>
+          <div style={{ backgroundColor: '#ffff00', color: '#000', padding: '3rem', fontSize: '2rem', border: '10px solid #0f0', textAlign: 'center' }}>
+            <div>🎭 CAN YOU SEE THIS?</div>
+            <button onClick={() => setShowGameMasterPanel(false)} style={{ marginTop: '1rem', padding: '1rem 2rem', fontSize: '1.5rem', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>CLOSE</button>
+          </div>
         </div>
-      </div>
-    )}
+      )}
     </div>
   );
 }
