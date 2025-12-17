@@ -943,7 +943,6 @@ function App() {
 
   if (gameState === 'lobby') {
     return (
-      <>
       <div style={{ minHeight: '100vh', backgroundColor: '#111827', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div onClick={() => void ensureMusicStarted()} style={{ textAlign: 'center', padding: '2rem', backgroundImage: "linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)), url('/lobbybckgrnd.png?v=3')", backgroundPosition: 'center', backgroundSize: 'cover', backgroundRepeat: 'no-repeat', backgroundColor: '#0a0f16', borderRadius: '0.5rem', border: '1px solid #223041', maxWidth: '28rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
@@ -1146,6 +1145,15 @@ function App() {
           </div>
         )}
 
+      {/* GameMaster Panel - LOBBY */}
+      {showGameMasterPanel && (
+        <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(255,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }}>
+          <div style={{ backgroundColor: '#ffff00', color: '#000', padding: '3rem', fontSize: '2rem', border: '10px solid #0f0', textAlign: 'center' }}>
+            <div>🎭 CAN YOU SEE THIS?</div>
+            <button onClick={() => setShowGameMasterPanel(false)} style={{ marginTop: '1rem', padding: '1rem 2rem', fontSize: '1.5rem', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>CLOSE</button>
+          </div>
+        </div>
+      )}
       </div>
     );
   }
@@ -2041,41 +2049,16 @@ function App() {
       )}
     </div>
 
-    {/* GameMaster Panel - COMPLETELY OUTSIDE ALL DIVS */}
+    {/* GameMaster Panel */}
     {showGameMasterPanel && (
-      <div 
-        style={{ 
-          position: 'fixed', 
-          top: '0px', 
-          left: '0px', 
-          width: '100vw', 
-          height: '100vh', 
-          backgroundColor: 'rgba(255,0,0,0.95)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center', 
-          zIndex: 999999,
-          pointerEvents: 'all'
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {console.log('🔴 RED MODAL RENDERING! showGameMasterPanel=', showGameMasterPanel)}
-        <div style={{ backgroundColor: '#ffff00', color: '#000000', padding: '5rem', fontSize: '4rem', border: '20px solid #00ff00', fontWeight: 'bold', textAlign: 'center' }}>
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(255,0,0,0.95)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 999999 }}>
+        <div style={{ backgroundColor: '#ffff00', color: '#000', padding: '3rem', fontSize: '2rem', border: '10px solid #0f0', textAlign: 'center' }}>
           <div>🎭 CAN YOU SEE THIS?</div>
-          <div style={{ fontSize: '2rem', marginTop: '2rem' }}>forceRender={forceRender}</div>
-          <button 
-            onClick={() => { 
-              console.log('CLOSE clicked'); 
-              setShowGameMasterPanel(false); 
-            }} 
-            style={{ display: 'block', margin: '2rem auto', padding: '2rem 4rem', fontSize: '3rem', backgroundColor: '#ff0000', color: 'white', border: '5px solid black', cursor: 'pointer', fontWeight: 'bold' }}
-          >
-            CLOSE MODAL
-          </button>
+          <button onClick={() => setShowGameMasterPanel(false)} style={{ marginTop: '1rem', padding: '1rem 2rem', fontSize: '1.5rem', backgroundColor: 'red', color: 'white', border: 'none', cursor: 'pointer' }}>CLOSE</button>
         </div>
       </div>
     )}
-    </>
+    </div>
   );
 }
 
