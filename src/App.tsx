@@ -244,7 +244,7 @@ function App() {
       socketRef.current = null;
     }
     setConnected(false);
-    setMyRoom(null);
+    // Keep myRoom intact so user can rejoin the same room without re-selecting
   };
 
   const socketRef = useRef<any | null>(null);
