@@ -378,27 +378,22 @@ function App() {
   useEffect(() => {
     // Initialize Socket.IO connection
     if (role && myRoom && !socketRef.current) {
-      addMessage('🔗 Connecting to game server...');
-      
       socketRef.current = io(API_URL, {
         transports: ['websocket']
       });
 
       const socket = socketRef.current;
-
+      
       socket.on('connect', async () => {
         setConnected(true);
-        addMessage('✅ Connected to game server!');
         
         // Join as the selected role in specified room
         const idToken = await auth.currentUser?.getIdToken();
         socket.emit('join_role', { role, room: myRoom, idToken });
-        addMessage(`🎭 Joined as ${role}`);
       });
 
       socket.on('disconnect', () => {
         setConnected(false);
-        addMessage('❌ Disconnected from game server');
       });
 
       socket.on('system', ({ msg }: { msg: string }) => {
@@ -1205,9 +1200,27 @@ function App() {
           >
             ← Back to Lobby
           </button>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fbbf24' }}>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#fbbf24', flex: 1 }}>
             🕵️ Detective Game - {role === 'detective' ? 'Detective Mode' : 'Character Controller'}
           </h1>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.5rem', 
+            backgroundColor: connected ? '#064e3b' : '#7f1d1d', 
+            padding: '0.375rem 0.75rem', 
+            borderRadius: '0.375rem',
+            fontSize: '0.875rem',
+            fontWeight: 500
+          }}>
+            <div style={{ 
+              width: '0.5rem', 
+              height: '0.5rem', 
+              borderRadius: '9999px', 
+              backgroundColor: connected ? '#34d399' : '#f87171' 
+            }} />
+            {connected ? 'Connected' : 'Disconnected'}
+          </div>
         </div>
       </div>
 
