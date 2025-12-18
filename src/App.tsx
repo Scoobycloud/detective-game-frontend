@@ -1400,9 +1400,9 @@ function App() {
                 style={{ flex: 1, padding: '0.5rem', backgroundColor: '#374151', borderRadius: '0.25rem', border: '1px solid #4b5563', color: 'white' }}
               />
               <button 
-                onClick={askQuestion}
+                onClick={() => { console.log('Ask clicked', { question, selectedCharacter, connected }); askQuestion(); }}
                 disabled={!question.trim() || !selectedCharacter || !connected}
-                title={!connected ? 'Not connected' : (!selectedCharacter ? 'Pick a suspect' : (!question.trim() ? 'Type a question' : 'Ask'))}
+                title={!connected ? 'Not connected' : (!selectedCharacter ? 'Pick a suspect' : (!question.trim() ? 'Type a question' : `Ask ${selectedCharacter}`))}
                 style={{ backgroundColor: (!question.trim() || !selectedCharacter || !connected) ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 1rem', borderRadius: '0.25rem', fontWeight: '600', border: 'none', cursor: (!question.trim() || !selectedCharacter || !connected) ? 'not-allowed' : 'pointer' }}
               >
                 Ask
