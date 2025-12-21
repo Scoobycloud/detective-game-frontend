@@ -65,7 +65,6 @@ function App() {
   }>>([]);
   const [timeline, setTimeline] = useState<Array<{ id: string; tstamp: string; phase: string; label: string; details?: string; created_at?: string }>>([]);
   const [alibis, setAlibis] = useState<Array<{ id: string; character: string; timeframe: string; account: string; credibility_score?: number; created_at?: string }>>([]);
-  const [credibility, setCredibility] = useState<{ counts: Array<{ character: string; contradictions: number; avg_credibility?: number }>; personality: Array<{ name: string; role: string; personality?: any }> }>({ counts: [], personality: [] });
   const [caseInfo, setCaseInfo] = useState<{ status?: string; seed?: string; narrative?: string } | null>(null);
   const [charactersDb, setCharactersDb] = useState<Array<{ name: string; role?: string; personality?: any }>>([]);
   // Admin: Knowledge Scope editor
@@ -480,7 +479,6 @@ function App() {
     setRole('detective');
     setGameState('playing');
     const roomInfo = rooms.find(r => r.code === myRoom);
-    console.log('joinAsDetective - myRoom:', myRoom, 'rooms:', rooms, 'roomInfo:', roomInfo);
     const roomDisplayName = roomInfo?.name || myRoom;
     addMessage(`🕵️ You are the Detective in ${roomDisplayName}!`);
   };
@@ -742,7 +740,6 @@ function App() {
         fetchClues(),
         fetchTimeline(),
         fetchAlibis(),
-        fetchCredibility(),
         fetchCase()
       ]);
 
@@ -772,15 +769,6 @@ function App() {
     }
   };
 
-  const fetchCredibility = async () => {
-    if (!myRoom) return;
-    try {
-      const res = await fetch(`${API_URL}/rooms/${myRoom}/credibility`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data) setCredibility({ counts: data.counts || [], personality: data.personality || [] });
-    } catch { }
-  };
 
   const searchLocation = async (loc: string) => {
     if (!myRoom || !loc.trim()) return;
@@ -817,7 +805,6 @@ function App() {
     void fetchEvidence();
     void fetchTimeline();
     void fetchAlibis();
-    void fetchCredibility();
     void fetchCase();
     void fetchCharacters();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1368,23 +1355,6 @@ function App() {
                         {Array.isArray(c.personality?.traits) ? (c.personality.traits.slice(0, 2).join(', ')) : ''}
                       </div>
                     )}
-                    {(() => {
-                      const cSig = credibility.counts.find(x => x.character === char);
-                      if (!cSig) return null;
-                      const avg = typeof cSig.avg_credibility === 'number' ? cSig.avg_credibility : undefined;
-                      const color = avg === undefined ? '#6b7280' : avg >= 66 ? '#16a34a' : avg >= 33 ? '#f59e0b' : '#dc2626';
-                      const title = `Avg credibility: ${avg !== undefined ? avg.toFixed(1) : '—'} | Contradictions: ${cSig.contradictions}`;
-                      return (
-                        <div title={title} style={{ marginTop: '0.125rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                          <span style={{ backgroundColor: color, color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>
-                            {avg !== undefined ? avg.toFixed(0) : '—'}
-                          </span>
-                          {cSig.contradictions > 0 && (
-                            <span style={{ backgroundColor: '#7c2d12', color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>×{cSig.contradictions}</span>
-                          )}
-                        </div>
-                      );
-                    })()}
                   </button>
                 );
               })}
@@ -1473,7 +1443,7 @@ function App() {
               <button onClick={() => { void fetchClues(); setShowCluesModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧩 Clues</button>
               <button onClick={() => { void fetchEvidence(); setShowEvidenceModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧾 Evidence</button>
               <button onClick={() => { void fetchTimeline(); setShowTimelineModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🕰️ Timeline</button>
-              <button onClick={() => { void fetchAlibis(); void fetchCredibility(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
+              <button onClick={() => { void fetchAlibis(); setShowAlibisModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧭 Alibis</button>
               <button onClick={() => { if (!charactersDb.length) { void fetchCharacters(); } const first = (charactersDb[0]?.name) || ''; setScopeCharacter(first); if (first) { void loadCharacterScope(first); } setShowScopeModal(true); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', cursor: 'pointer' }}>🧠 Knowledge Scope</button>
               {/* GM button hidden in-game; available from lobby for admins only */}
               <select
@@ -1621,23 +1591,6 @@ function App() {
                           )}
                         </div>
                         <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{char}</div>
-                        {(() => {
-                          const cSig = credibility.counts.find(x => x.character === char);
-                          if (!cSig) return null;
-                          const avg = typeof cSig.avg_credibility === 'number' ? cSig.avg_credibility : undefined;
-                          const color = avg === undefined ? '#6b7280' : avg >= 66 ? '#16a34a' : avg >= 33 ? '#f59e0b' : '#dc2626';
-                          const title = `Avg credibility: ${avg !== undefined ? avg.toFixed(1) : '—'} | Contradictions: ${cSig.contradictions}`;
-                          return (
-                            <div title={title} style={{ marginTop: '0.125rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
-                              <span style={{ backgroundColor: color, color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>
-                                {avg !== undefined ? avg.toFixed(0) : '—'}
-                              </span>
-                              {cSig.contradictions > 0 && (
-                                <span style={{ backgroundColor: '#7c2d12', color: 'white', borderRadius: '9999px', padding: '0.1rem 0.5rem', fontSize: '0.7rem' }}>×{cSig.contradictions}</span>
-                              )}
-                            </div>
-                          );
-                        })()}
                       </button>
                     );
                   })}
@@ -1733,7 +1686,6 @@ function App() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🧭 Alibis</h3>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button onClick={() => { void fetchCredibility(); }} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Credibility</button>
                 <button onClick={() => void fetchAlibis()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
                 <button onClick={() => setShowAlibisModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
               </div>
@@ -1746,28 +1698,11 @@ function App() {
                   <div key={a.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>{a.character}</span>
-                      {typeof a.credibility_score === 'number' && (() => {
-                        const avg = a.credibility_score;
-                        const color = avg >= 66 ? '#16a34a' : avg >= 33 ? '#f59e0b' : '#dc2626';
-                        return <span title="Alibi credibility" style={{ fontSize: '0.75rem', color }}>{avg.toFixed(1)}</span>;
-                      })()}
                     </div>
                     <div style={{ fontSize: '0.75rem', color: '#d1d5db' }}>Time: {a.timeframe}</div>
                     <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{a.account}</div>
                   </div>
                 ))}
-              </div>
-            )}
-            {credibility.counts.length > 0 && (
-              <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#9ca3af' }}>
-                <div style={{ marginBottom: '0.25rem' }}>Contradictions detected:</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  {credibility.counts.map((c, i) => (
-                    <span key={i} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '9999px', padding: '0.25rem 0.5rem' }}>
-                      {c.character}: {c.contradictions}
-                    </span>
-                  ))}
-                </div>
               </div>
             )}
           </div>
