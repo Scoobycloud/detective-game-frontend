@@ -348,8 +348,7 @@ function App() {
   };
 
   useEffect(() => {
-    addMessage('🎮 Welcome to Detective Game Online!');
-    addMessage('Choose your role to begin...');
+    // Initial welcome messages removed - UI is self-explanatory
   }, []);
 
   const loadRooms = useCallback(async () => {
@@ -480,14 +479,18 @@ function App() {
     if (!myRoom) return addMessage('❌ Enter or create a room first.');
     setRole('detective');
     setGameState('playing');
-    addMessage(`🕵️ You are the Detective in room ${myRoom}!`);
+    const roomInfo = rooms.find(r => r.code === myRoom);
+    const roomDisplayName = roomInfo?.name || myRoom;
+    addMessage(`🕵️ You are the Detective in ${roomDisplayName}!`);
   };
 
   const joinAsMurderer = () => {
     if (!myRoom) return addMessage('❌ Enter or create a room first.');
     setRole('murderer');
     setGameState('playing');
-    addMessage(`🎭 You are controlling a character in room ${myRoom}!`);
+    const roomInfo = rooms.find(r => r.code === myRoom);
+    const roomDisplayName = roomInfo?.name || myRoom;
+    addMessage(`🎭 You are controlling a character in ${roomDisplayName}!`);
   };
 
   // createRoom is no longer used in the simplified UI
@@ -960,7 +963,7 @@ function App() {
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                 <select
                   value={roomCode}
-                  onChange={(e) => { setRoomCode(e.target.value); setMyRoom(e.target.value || null); if (e.target.value) addMessage(`🔑 Selected room: ${e.target.value}`); }}
+                  onChange={(e) => { setRoomCode(e.target.value); setMyRoom(e.target.value || null); }}
                   style={{ flex: 1, padding: '0.5rem', backgroundColor: '#0E1622', border: '1px solid #2A3A4A', borderRadius: '0.25rem', color: '#E5E7EB' }}
                 >
                   <option value="">Select a room…</option>
