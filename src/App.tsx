@@ -480,6 +480,7 @@ function App() {
     setRole('detective');
     setGameState('playing');
     const roomInfo = rooms.find(r => r.code === myRoom);
+    console.log('joinAsDetective - myRoom:', myRoom, 'rooms:', rooms, 'roomInfo:', roomInfo);
     const roomDisplayName = roomInfo?.name || myRoom;
     addMessage(`🕵️ You are the Detective in ${roomDisplayName}!`);
   };
