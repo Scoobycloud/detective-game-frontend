@@ -1121,7 +1121,6 @@ function App() {
                     temp.on('room_created', async ({ room }) => {
                       setMyRoom(room);
                       setRoomCode(room);
-                      addMessage(`🏠 Room created: ${room}`);
                       // Set room name
                       try { await fetch(`${API_URL}/rooms/${encodeURIComponent(room)}/name`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: newRoomName }) }); } catch { }
                       temp.disconnect();
