@@ -1248,27 +1248,29 @@ function App() {
               </div>
             </div>
           </div>
-          {role === 'detective' && (
+          {role === 'detective' && stageStatus !== 'closed' && (
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <button
                 onClick={async () => {
+                  const stageOrder = ['investigation', 'interrogation', 'accusation', 'closed'];
+                  const currentIndex = stageOrder.indexOf(stageStatus);
+                  const nextStage = currentIndex >= 0 && currentIndex < stageOrder.length - 1 
+                    ? stageOrder[currentIndex + 1] 
+                    : 'closed';
+                  if (!window.confirm(`Advance to ${nextStage} stage?`)) return;
                   try {
                     await fetch(`${API_URL}/rooms/${myRoom}/status`, {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ pause: !stagePaused })
+                      body: JSON.stringify({ status: nextStage })
                     });
-                    setStagePaused(!stagePaused);
-                    if (!stagePaused && stageEndsAt) {
-                      // freeze remaining
-                      setStageEndsAt(Date.now() + Math.max(0, stageEndsAt - Date.now()));
-                    }
+                    setStageStatus(nextStage);
                     await fetchCase();
                   } catch {}
                 }}
-                style={{ backgroundColor: stagePaused ? '#059669' : '#f59e0b', color: stagePaused ? 'white' : '#111827', padding: '0.35rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}
+                style={{ backgroundColor: '#2563eb', color: 'white', padding: '0.35rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 700 }}
               >
-                {stagePaused ? 'Resume' : 'Pause'}
+                Next Stage →
               </button>
             </div>
           )}
