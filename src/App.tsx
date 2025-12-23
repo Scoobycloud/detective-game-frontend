@@ -1748,7 +1748,7 @@ function App() {
       )}
       {showTimelineModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
-          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', maxHeight: '80vh', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', maxHeight: '80vh', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexShrink: 0 }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🕰️ Timeline</h3>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -1764,7 +1764,7 @@ function App() {
             {timeline.length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No timeline events yet.</div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', minHeight: 0, flexGrow: 1, paddingRight: '0.5rem' }}>
                 {timeline.map((t) => {
                   const phaseColors: Record<string, { bg: string; border: string; accent: string }> = {
                     before: { bg: '#1e3a5f', border: '#3b82f6', accent: '#60a5fa' },
