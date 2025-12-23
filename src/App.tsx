@@ -1748,10 +1748,15 @@ function App() {
       )}
       {showTimelineModal && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
-          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', borderRadius: '0.5rem', padding: '1rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+          <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '48rem', maxHeight: '80vh', borderRadius: '0.5rem', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexShrink: 0 }}>
               <h3 style={{ fontSize: '1.125rem', fontWeight: 600 }}>🕰️ Timeline</h3>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>
+                  <span style={{ color: '#60a5fa' }}>● before</span>{' '}
+                  <span style={{ color: '#f59e0b' }}>● during</span>{' '}
+                  <span style={{ color: '#ef4444' }}>● after</span>
+                </span>
                 <button onClick={() => void fetchTimeline()} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Refresh</button>
                 <button onClick={() => setShowTimelineModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', cursor: 'pointer', fontSize: '0.875rem' }}>Close</button>
               </div>
@@ -1759,19 +1764,27 @@ function App() {
             {timeline.length === 0 ? (
               <div style={{ fontSize: '0.875rem', color: '#9ca3af' }}>No timeline events yet.</div>
             ) : (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(1, minmax(0, 1fr))', gap: '0.5rem' }}>
-                {timeline.map((t) => (
-                  <div key={t.id} style={{ backgroundColor: '#111827', border: '1px solid #374151', borderRadius: '0.375rem', padding: '0.5rem', display: 'grid', gridTemplateColumns: '6rem 1fr', gap: '0.5rem' }}>
-                    <div style={{ fontSize: '0.875rem', color: '#d1d5db' }}>
-                      <div style={{ fontWeight: 600 }}>{t.tstamp}</div>
-                      <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{t.phase}</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', overflowY: 'auto', flex: 1 }}>
+                {timeline.map((t) => {
+                  const phaseColors: Record<string, { bg: string; border: string; accent: string }> = {
+                    before: { bg: '#1e3a5f', border: '#3b82f6', accent: '#60a5fa' },
+                    during: { bg: '#422006', border: '#f59e0b', accent: '#fbbf24' },
+                    after: { bg: '#450a0a', border: '#ef4444', accent: '#f87171' },
+                  };
+                  const colors = phaseColors[t.phase] || { bg: '#111827', border: '#374151', accent: '#9ca3af' };
+                  return (
+                    <div key={t.id} style={{ backgroundColor: colors.bg, border: `1px solid ${colors.border}`, borderRadius: '0.375rem', padding: '0.5rem', display: 'grid', gridTemplateColumns: '6rem 1fr', gap: '0.5rem' }}>
+                      <div style={{ fontSize: '0.875rem', color: '#d1d5db' }}>
+                        <div style={{ fontWeight: 600 }}>{t.tstamp}</div>
+                        <div style={{ fontSize: '0.75rem', color: colors.accent, fontWeight: 500 }}>{t.phase}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{t.label}</div>
+                        {t.details && <div style={{ fontSize: '0.75rem', color: '#d1d5db', marginTop: '0.25rem' }}>{t.details}</div>}
+                      </div>
                     </div>
-                    <div>
-                      <div style={{ fontSize: '0.875rem', fontWeight: 600 }}>{t.label}</div>
-                      {t.details && <div style={{ fontSize: '0.75rem', color: '#9ca3af', marginTop: '0.25rem' }}>{t.details}</div>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
