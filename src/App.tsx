@@ -228,12 +228,8 @@ function App() {
     setKnowledgeError(null);
     setKnowledgeText('{}');
     setScopeCharacter('');
-    // Fetch characters for the dropdown if we have a room selected
-    if (myRoom && !charactersDb.length) {
-      void fetchCharacters();
-    }
     setShowKnowledgeModal(true);
-  }, [isAdmin, showToast, myRoom, charactersDb.length, fetchCharacters]);
+  }, [isAdmin, showToast]);
 
   const goToLobby = () => {
     setGameState('lobby');
