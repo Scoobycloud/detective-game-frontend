@@ -226,9 +226,14 @@ function App() {
       return;
     }
     setKnowledgeError(null);
+    setKnowledgeText('{}');
+    setScopeCharacter('');
+    // Fetch characters for the dropdown if we have a room selected
+    if (myRoom && !charactersDb.length) {
+      void fetchCharacters();
+    }
     setShowKnowledgeModal(true);
-    void loadKnowledge();
-  }, [isAdmin, loadKnowledge, showToast]);
+  }, [isAdmin, showToast, myRoom, charactersDb.length, fetchCharacters]);
 
   const goToLobby = () => {
     setGameState('lobby');
@@ -1068,29 +1073,113 @@ function App() {
           <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 80 }}>
             <div style={{ backgroundColor: '#111827', color: 'white', width: '100%', maxWidth: '60rem', borderRadius: '0.5rem', padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fbbf24' }}>Admin: Knowledge Editor</h2>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fbbf24' }}>Admin: Character Knowledge Editor</h2>
                 <button onClick={() => setShowKnowledgeModal(false)} style={{ backgroundColor: '#374151', color: 'white', border: 'none', borderRadius: '0.375rem', padding: '0.375rem 0.75rem', cursor: 'pointer' }}>Close</button>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <button onClick={() => void loadKnowledge()} disabled={knowledgeBusy} style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>
-                  {knowledgeBusy ? 'Loading…' : 'Load'}
-                </button>
-                <button onClick={() => void saveKnowledge()} disabled={knowledgeBusy} style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}>
-                  {knowledgeBusy ? 'Saving…' : 'Save'}
-                </button>
-              </div>
-              <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
-                API: {API_URL} · Admin: {isAdmin ? 'yes' : 'no'}
-              </div>
-              {knowledgeError && (
-                <div style={{ backgroundColor: '#7f1d1d', color: 'white', padding: '0.5rem', borderRadius: '0.375rem', marginBottom: '0.5rem' }}>
-                  ❌ {knowledgeError}
-                </div>
+              {!myRoom ? (
+                <div style={{ color: '#f87171', padding: '1rem' }}>Please select a room first to edit character knowledge.</div>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <select
+                      value={scopeCharacter}
+                      onChange={async (e) => {
+                        const name = e.target.value;
+                        setScopeCharacter(name);
+                        if (name && myRoom) {
+                          setKnowledgeBusy(true);
+                          setKnowledgeError(null);
+                          try {
+                            const res = await fetch(`${API_URL}/rooms/${myRoom}/characters/${encodeURIComponent(name)}/knowledge`);
+                            const data = await res.json();
+                            setKnowledgeText(JSON.stringify(data?.knowledge || {}, null, 2));
+                          } catch (err: any) {
+                            setKnowledgeError(err?.message || 'Failed to load');
+                          } finally {
+                            setKnowledgeBusy(false);
+                          }
+                        }
+                      }}
+                      style={{ backgroundColor: '#1f2937', color: 'white', border: '1px solid #4b5563', borderRadius: '0.375rem', padding: '0.5rem', minWidth: '12rem' }}
+                    >
+                      <option value="">Select character…</option>
+                      {(charactersDb.length > 0 ? charactersDb : characters.map(n => ({ name: n }))).map(c => (
+                        <option key={c.name} value={c.name}>{c.name}</option>
+                      ))}
+                    </select>
+                    <button
+                      onClick={async () => {
+                        if (!scopeCharacter || !myRoom) return;
+                        setKnowledgeBusy(true);
+                        setKnowledgeError(null);
+                        try {
+                          const res = await fetch(`${API_URL}/rooms/${myRoom}/characters/${encodeURIComponent(scopeCharacter)}/knowledge`);
+                          const data = await res.json();
+                          setKnowledgeText(JSON.stringify(data?.knowledge || {}, null, 2));
+                        } catch (err: any) {
+                          setKnowledgeError(err?.message || 'Failed to load');
+                        } finally {
+                          setKnowledgeBusy(false);
+                        }
+                      }}
+                      disabled={knowledgeBusy || !scopeCharacter}
+                      style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#2563eb', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}
+                    >
+                      {knowledgeBusy ? 'Loading…' : 'Reload'}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!scopeCharacter || !myRoom) return;
+                        setKnowledgeBusy(true);
+                        setKnowledgeError(null);
+                        try {
+                          let parsed: any;
+                          try { parsed = JSON.parse(knowledgeText); } catch { throw new Error('Invalid JSON'); }
+                          const res = await fetch(`${API_URL}/rooms/${myRoom}/characters/${encodeURIComponent(scopeCharacter)}/knowledge`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ knowledge: parsed })
+                          });
+                          if (!res.ok) throw new Error(`Save failed (${res.status})`);
+                          setKnowledgeError(null);
+                          addMessage(`✅ Knowledge saved for ${scopeCharacter}`);
+                        } catch (err: any) {
+                          setKnowledgeError(err?.message || 'Failed to save');
+                        } finally {
+                          setKnowledgeBusy(false);
+                        }
+                      }}
+                      disabled={knowledgeBusy || !scopeCharacter}
+                      style={{ backgroundColor: knowledgeBusy ? '#4b5563' : '#059669', color: 'white', padding: '0.5rem 0.75rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer' }}
+                    >
+                      {knowledgeBusy ? 'Saving…' : 'Save'}
+                    </button>
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#9ca3af', marginBottom: '0.25rem' }}>
+                    Room: {myRoom} · Character: {scopeCharacter || '(none)'}
+                  </div>
+                  {knowledgeError && (
+                    <div style={{ backgroundColor: '#7f1d1d', color: 'white', padding: '0.5rem', borderRadius: '0.375rem', marginBottom: '0.5rem' }}>
+                      ❌ {knowledgeError}
+                    </div>
+                  )}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                      Knowledge JSON (background, location_hints, about)
+                    </label>
+                    <textarea
+                      value={knowledgeText}
+                      onChange={(e) => setKnowledgeText(e.target.value)}
+                      spellCheck={false}
+                      placeholder='{"background": ["..."], "location_hints": ["..."], "about": {"Other Character": ["..."]}}'
+                      style={{ width: '100%', minHeight: '20rem', backgroundColor: '#1f2937', color: '#e5e7eb', border: '1px solid #4b5563', borderRadius: '0.375rem', padding: '0.75rem', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace', fontSize: '0.875rem' }}
+                    />
+                  </div>
+                  <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#6b7280' }}>
+                    Structure: {`{ "background": ["..."], "location_hints": ["..."], "about": { "Character Name": ["..."] } }`}
+                  </div>
+                </>
               )}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', marginBottom: '0.25rem' }}>knowledge.json</label>
-                <textarea value={knowledgeText} onChange={(e) => setKnowledgeText(e.target.value)} spellCheck={false} style={{ width: '100%', minHeight: '24rem', backgroundColor: '#1f2937', color: '#e5e7eb', border: '1px solid #4b5563', borderRadius: '0.375rem', padding: '0.75rem', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace', fontSize: '0.875rem' }} />
-              </div>
             </div>
           </div>
         )}
