@@ -79,6 +79,7 @@ function App() {
   const [showEvidenceModal, setShowEvidenceModal] = useState(false);
   const [showTimelineModal, setShowTimelineModal] = useState(false);
   const [showAlibisModal, setShowAlibisModal] = useState(false);
+  const [accusationResult, setAccusationResult] = useState<null | { verdict?: string }>(null);
   const [showGameMasterPanel, setShowGameMasterPanel] = useState(false);
   // Admin knowledge editor
   const [showKnowledgeModal, setShowKnowledgeModal] = useState(false);
@@ -1465,6 +1466,7 @@ function App() {
                   const data = await res.json();
                   if (data?.ok) {
                     showToast(data?.verdict ? `Case closed (${data.verdict})` : 'Case closed', 'ok');
+                    setAccusationResult({ verdict: data?.verdict });
                     await fetchCase();
                   } else {
                     showToast('Accusation failed', 'error');
@@ -1691,6 +1693,28 @@ function App() {
           </div>
         )}
       </div>
+
+      {/* Accusation result splash */}
+      {accusationResult && (
+        <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div style={{ background: '#0b1220', color: 'white', padding: '2rem', borderRadius: '0.75rem', border: '1px solid #2563eb', boxShadow: '0 15px 40px rgba(0,0,0,0.6)', maxWidth: '32rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '0.75rem', color: accusationResult.verdict === 'correct' ? '#22c55e' : '#f87171' }}>
+              {accusationResult.verdict === 'correct' ? 'Congratulations!' : 'Incorrect Accusation'}
+            </div>
+            <div style={{ fontSize: '1.1rem', marginBottom: '1.25rem', lineHeight: 1.4 }}>
+              {accusationResult.verdict === 'correct'
+                ? "You've nailed the culprit. Promotion incoming!"
+                : "That wasn't the murderer. You've been demoted—better luck next case."}
+            </div>
+            <button
+              onClick={() => setAccusationResult(null)}
+              style={{ backgroundColor: '#2563eb', color: 'white', border: 'none', borderRadius: '0.5rem', padding: '0.65rem 1.25rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      )}
       {showHelp && (
         <div style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', zIndex: 50 }}>
           <div style={{ backgroundColor: '#1f2937', color: 'white', width: '100%', maxWidth: '42rem', borderRadius: '0.5rem', padding: '1rem', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
